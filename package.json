@@ -1,0 +1,29 @@
+{
+  "name": "minecoord",
+  "version": "1.0.0",
+  "description": "Localizador de coordenadas para servidores de Minecraft",
+  "main": "backend/src/server.js",
+  "scripts": {
+    "start": "node backend/src/server.js",
+    "dev": "node --watch backend/src/server.js",
+    "test": "node --test",
+    "check": "node scripts/check.js",
+    "retomar": "python3 scripts/continuity.py retomar",
+    "checkpoint": "python3 scripts/continuity.py encerrar",
+    "checkpoint:verify": "python3 scripts/continuity.py verificar"
+  },
+  "keywords": [
+    "minecraft",
+    "express",
+    "coordinates",
+    "json"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.19.2"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

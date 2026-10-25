@@ -1,0 +1,9 @@
+node_modules/
+data/*
+!data/.gitkeep
+.checkpoints/
+.env
+.env.*
+!.env.example
+coverage/
+*.log
