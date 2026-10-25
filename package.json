@@ -1,6 +1,6 @@
 {
   "name": "minecoord",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Localizador de coordenadas para servidores de Minecraft",
   "main": "backend/src/server.js",
   "scripts": {
@@ -10,7 +10,9 @@
     "check": "node scripts/check.js",
     "retomar": "python3 scripts/continuity.py retomar",
     "checkpoint": "python3 scripts/continuity.py encerrar",
-    "checkpoint:verify": "python3 scripts/continuity.py verificar"
+    "checkpoint:verify": "python3 scripts/continuity.py verificar",
+    "test:e2e": "node scripts/e2e.js",
+    "test:continuity": "python3 -m unittest discover -s scripts -p 'test_*.py'"
   },
   "keywords": [
     "minecraft",

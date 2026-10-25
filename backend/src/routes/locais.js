@@ -1,96 +1,56 @@
 const router = require('express').Router();
-const { lerCoordenadas, salvarCoordenadas } = require('../services/coordenadas');
+const { randomUUID } = require('node:crypto');
+const { lerCoordenadas, atualizarCoordenadas } = require('../services/coordenadas');
 const { validarDadosLocal } = require('../validation/local');
 
-// ROTA 1: GET /locais - Retorna todos os locais cadastrados
-router.get('/locais', async (req, res) => {
-  try {
-    const locais = await lerCoordenadas();
-    res.json(locais);
-  } catch (error) {
-    console.error('Erro ao ler coordenadas do arquivo:', error);
-    res.status(500).json({ error: 'Erro interno do servidor ao carregar os dados.' });
-  }
-});
+const tratar = (handler) => (req, res, next) => Promise.resolve(handler(req, res)).catch(next);
+function naoEncontrado() {
+  const error = new Error('Localização não encontrada.');
+  error.status = 404;
+  return error;
+}
 
-// ROTA 2: POST /locais - Cadastra uma nova localização
-router.post('/locais', async (req, res) => {
-  try {
-    const validacao = validarDadosLocal(req.body);
-    if (!validacao.valido) {
-      return res.status(400).json({ error: validacao.erro });
-    }
+router.get('/locais', tratar(async (req, res) => {
+  res.json(await lerCoordenadas());
+}));
 
-    const locais = await lerCoordenadas();
-
-    const novoLocal = {
-      id: Date.now().toString(), // ID único baseado em timestamp
-      ...validacao.dadosFormatados,
-      criadoEm: new Date().toISOString()
-    };
-
+router.post('/locais', tratar(async (req, res) => {
+  const validacao = validarDadosLocal(req.body);
+  if (!validacao.valido) return res.status(400).json({ error: validacao.erro });
+  const novoLocal = {
+    id: randomUUID(),
+    ...validacao.dadosFormatados,
+    criadoEm: new Date().toISOString()
+  };
+  await atualizarCoordenadas(locais => {
     locais.push(novoLocal);
-    await salvarCoordenadas(locais);
+    return novoLocal;
+  });
+  res.status(201).json(novoLocal);
+}));
 
-    res.status(201).json(novoLocal);
-  } catch (error) {
-    console.error('Erro ao salvar coordenadas no arquivo:', error);
-    res.status(500).json({ error: 'Erro interno do servidor ao salvar os dados.' });
-  }
-});
-
-// ROTA 3: PUT /locais/:id - Atualiza uma localização existente
-router.put('/locais/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const validacao = validarDadosLocal(req.body);
-    if (!validacao.valido) {
-      return res.status(400).json({ error: validacao.erro });
-    }
-
-    const locais = await lerCoordenadas();
-    const indice = locais.findIndex(l => l.id === id);
-
-    if (indice === -1) {
-      return res.status(404).json({ error: 'Localização não encontrada.' });
-    }
-
-    // Atualiza mantendo dados invariáveis
+router.put('/locais/:id', tratar(async (req, res) => {
+  const validacao = validarDadosLocal(req.body);
+  if (!validacao.valido) return res.status(400).json({ error: validacao.erro });
+  const atualizado = await atualizarCoordenadas(locais => {
+    const indice = locais.findIndex(local => local.id === req.params.id);
+    if (indice === -1) throw naoEncontrado();
     locais[indice] = {
-      ...locais[indice],
-      ...validacao.dadosFormatados,
+      ...locais[indice], ...validacao.dadosFormatados,
       atualizadoEm: new Date().toISOString()
     };
+    return locais[indice];
+  });
+  res.json(atualizado);
+}));
 
-    await salvarCoordenadas(locais);
-    res.json(locais[indice]);
-  } catch (error) {
-    console.error('Erro ao atualizar coordenadas no arquivo:', error);
-    res.status(500).json({ error: 'Erro interno do servidor ao atualizar os dados.' });
-  }
-});
-
-// ROTA 4: DELETE /locais/:id - Remove um local
-router.delete('/locais/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const locais = await lerCoordenadas();
-    const indice = locais.findIndex(l => l.id === id);
-
-    if (indice === -1) {
-      return res.status(404).json({ error: 'Localização não encontrada.' });
-    }
-
-    const [removido] = locais.splice(indice, 1);
-    await salvarCoordenadas(locais);
-
-    res.json({ message: `Local "${removido.nome}" removido com sucesso.`, id });
-  } catch (error) {
-    console.error('Erro ao deletar coordenadas no arquivo:', error);
-    res.status(500).json({ error: 'Erro interno do servidor ao deletar os dados.' });
-  }
-});
-
+router.delete('/locais/:id', tratar(async (req, res) => {
+  const removido = await atualizarCoordenadas(locais => {
+    const indice = locais.findIndex(local => local.id === req.params.id);
+    if (indice === -1) throw naoEncontrado();
+    return locais.splice(indice, 1)[0];
+  });
+  res.json({ message: `Local "${removido.nome}" removido com sucesso.`, id: req.params.id });
+}));
 
 module.exports = router;

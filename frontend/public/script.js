@@ -1,499 +1,352 @@
 document.addEventListener('DOMContentLoaded', () => {
-  // =========================================================================
-  // SELEÇÃO DE ELEMENTOS DO DOM
-  // =========================================================================
-  const form = document.getElementById('form-coordenada');
-  const tabelaCorpo = document.getElementById('tabela-corpo');
-  const searchInput = document.getElementById('search-input');
-  
-  // Elementos do formulário de Cadastro
-  const inputNome = document.getElementById('nome');
-  const inputX = document.getElementById('coord-x');
-  const inputY = document.getElementById('coord-y');
-  const inputZ = document.getElementById('coord-z');
-  const selectDimensao = document.getElementById('dimensao');
-  const selectCategoria = document.getElementById('categoria');
-
-  // Elementos de mensagem de erro do Cadastro
-  const errorNome = document.getElementById('error-nome');
-  const errorCoords = document.getElementById('error-coords');
-  const errorDimensao = document.getElementById('error-dimensao');
-  const errorCategoria = document.getElementById('error-categoria');
-
-  // Elementos do Modal de Edição
-  const editModal = document.getElementById('edit-modal');
-  const formEditar = document.getElementById('form-editar');
-  const editId = document.getElementById('edit-id');
-  const editNome = document.getElementById('edit-nome');
-  const editX = document.getElementById('edit-coord-x');
-  const editY = document.getElementById('edit-coord-y');
-  const editZ = document.getElementById('edit-coord-z');
-  const editDimensao = document.getElementById('edit-dimensao');
-  const editCategoria = document.getElementById('edit-categoria');
-  const btnCancelarEdicao = document.getElementById('btn-cancelar-edicao');
-
-  const editErrorNome = document.getElementById('edit-error-nome');
-  const editErrorCoords = document.getElementById('edit-error-coords');
-
-  // Abas de Dimensão
+  const $ = id => document.getElementById(id);
+  const form = $('form-coordenada');
+  const formEditar = $('form-editar');
+  const tabelaCorpo = $('tabela-corpo');
+  const searchInput = $('search-input');
+  const editModal = $('edit-modal');
+  const deleteModal = $('delete-modal');
+  const feedback = $('feedback');
+  const atualizar = $('btn-atualizar');
+  const resumo = $('list-summary');
   const tabButtons = document.querySelectorAll('.tab-btn');
-
-  // Cache local e Filtro Selecionado
+  const EMOJIS = { Base: '🏠', Farm: '🌾', Portal: '🚪', Vila: '🏡', Mina: '⛏️', Outros: '📍' };
+  const DIMENSOES = { Overworld: '🌲', Nether: '🔥', End: '🌌' };
   let locaisCache = [];
   let dimensaoFiltro = 'Todos';
+  let salvando = false;
+  let carregamento;
+  let carregou = false;
+  let excluirPendente;
+  let ultimoFoco;
 
-  // Dicionário de Emojis das Categorias
-  const CATEGORIA_EMOJIS = {
-    Base: '🏠',
-    Farm: '🌾',
-    Portal: '🚪',
-    Vila: '🏡',
-    Mina: '⛏️',
-    Outros: '📍'
-  };
-
-  // =========================================================================
-  // CARREGAR E RENDERIZAR LOCAIS
-  // =========================================================================
-
-  /**
-   * Busca a lista de locais do backend (GET /api/locais)
-   */
-  async function carregarLocais() {
-    try {
-      const response = await fetch('/api/locais');
-      if (!response.ok) {
-        throw new Error('Falha ao carregar as coordenadas do servidor.');
-      }
-      locaisCache = await response.json();
-      filtrarERenderizarLocais();
-    } catch (error) {
-      console.error('Erro na requisição GET:', error);
-      tabelaCorpo.innerHTML = `
-        <tr class="empty-row">
-          <td colspan="4" style="color: var(--color-error)">❌ Erro ao carregar pontos. Tente novamente mais tarde.</td>
-        </tr>
-      `;
-    }
-  }
-
-  /**
-   * Filtra os locais do cache baseado no termo de busca e na dimensão ativa (abas)
-   */
-  function filtrarERenderizarLocais() {
-    const termo = searchInput.value.toLowerCase().trim();
-
-    const locaisFiltrados = locaisCache.filter(local => {
-      // 1. Filtro da Aba de Dimensão
-      const matchesDimensao = (dimensaoFiltro === 'Todos' || local.dimensao === dimensaoFiltro);
-
-      // 2. Filtro da Barra de Pesquisa (Nome, Coordenadas, Categoria ou Dimensão)
-      const matchesBusca = 
-        local.nome.toLowerCase().includes(termo) || 
-        local.dimensao.toLowerCase().includes(termo) ||
-        local.categoria.toLowerCase().includes(termo) ||
-        local.x.toString().includes(termo) ||
-        local.y.toString().includes(termo) ||
-        local.z.toString().includes(termo);
-
-      return matchesDimensao && matchesBusca;
-    });
-
-    renderizarTabela(locaisFiltrados);
-  }
-
-  /**
-   * Injeta o HTML dos locais na tabela
-   */
-  function renderizarTabela(listaLocais) {
-    tabelaCorpo.innerHTML = '';
-
-    if (listaLocais.length === 0) {
-      tabelaCorpo.innerHTML = `
-        <tr class="empty-row">
-          <td colspan="4">Nenhum ponto de interesse encontrado.</td>
-        </tr>
-      `;
+  function avisar(mensagem, erro = false) {
+    if (erro && editModal.open) {
+      $('edit-feedback').textContent = mensagem;
+      $('edit-feedback').hidden = false;
       return;
     }
-
-    listaLocais.forEach((local, index) => {
-      const tr = document.createElement('tr');
-      tr.className = 'fade-in-item';
-      tr.style.animationDelay = `${index * 0.04}s`;
-
-      const dimensaoClasse = local.dimensao.toLowerCase();
-
-      // Definir emoji da dimensão
-      let emojiDimensao = '🌲';
-      if (local.dimensao === 'Nether') emojiDimensao = '🔥';
-      if (local.dimensao === 'End') emojiDimensao = '🌌';
-
-      // Definir emoji da categoria
-      const emojiCategoria = CATEGORIA_EMOJIS[local.categoria] || '📍';
-
-      // Lógica da Calculadora do Portal (1:8)
-      let portalCalculadoraHTML = '';
-      if (local.dimensao === 'Overworld') {
-        const netherX = Math.round(local.x / 8);
-        const netherZ = Math.round(local.z / 8);
-        portalCalculadoraHTML = `
-          <div class="portal-calc-container to-nether" title="Coordenada equivalente ideal para criar portal no Nether">
-            <span class="portal-calc-label">🔥 Nether Link:</span>
-            <span class="portal-calc-coords">X: <span>${netherX}</span>, Z: <span>${netherZ}</span></span>
-          </div>
-        `;
-      } else if (local.dimensao === 'Nether') {
-        const overworldX = local.x * 8;
-        const overworldZ = local.z * 8;
-        portalCalculadoraHTML = `
-          <div class="portal-calc-container to-overworld" title="Coordenada equivalente ideal para criar portal no Overworld">
-            <span class="portal-calc-label">🌲 Overworld Link:</span>
-            <span class="portal-calc-coords">X: <span>${overworldX}</span>, Z: <span>${overworldZ}</span></span>
-          </div>
-        `;
-      }
-
-      tr.innerHTML = `
-        <td>
-          <div class="local-nome">${escaparHTML(local.nome)}</div>
-          <div class="local-categoria">${emojiCategoria} ${local.categoria}</div>
-        </td>
-        <td>
-          <span class="badge-dimensao ${dimensaoClasse}">
-            ${emojiDimensao} ${local.dimensao}
-          </span>
-        </td>
-        <td>
-          <div class="coord-badge-container">
-            <span class="coord-axis">X: <span class="coord-axis-val">${local.x}</span></span>
-            <span class="coord-axis">Y: <span class="coord-axis-val">${local.y}</span></span>
-            <span class="coord-axis">Z: <span class="coord-axis-val">${local.z}</span></span>
-          </div>
-          ${portalCalculadoraHTML}
-        </td>
-        <td class="actions-column">
-          <div class="actions-wrapper">
-            <button class="btn-copy" title="Copiar comando de teleport para chat">
-              <span class="copy-text">Copiar /tp</span>
-              <span class="copy-icon">📋</span>
-            </button>
-            <button class="btn-action btn-edit" title="Editar Localização">✏️</button>
-            <button class="btn-action btn-delete" title="Excluir Localização">🗑️</button>
-          </div>
-        </td>
-      `;
-
-      // Evento: Copiar comando /tp
-      const btnCopy = tr.querySelector('.btn-copy');
-      btnCopy.addEventListener('click', () => {
-        copiarComandoTeletransporte(btnCopy, local.x, local.y, local.z);
-      });
-
-      // Evento: Editar
-      const btnEdit = tr.querySelector('.btn-edit');
-      btnEdit.addEventListener('click', () => {
-        abrirModalEdicao(local);
-      });
-
-      // Evento: Deletar
-      const btnDelete = tr.querySelector('.btn-delete');
-      btnDelete.addEventListener('click', () => {
-        deletarLocal(local.id, local.nome);
-      });
-
-      tabelaCorpo.appendChild(tr);
-    });
+    feedback.textContent = mensagem;
+    feedback.classList.toggle('feedback-error', erro);
+    feedback.setAttribute('role', erro ? 'alert' : 'status');
+    feedback.hidden = false;
   }
 
-  // =========================================================================
-  // MANIPULAÇÃO DAS TABS (FILTRO POR DIMENSÃO)
-  // =========================================================================
-  tabButtons.forEach(button => {
-    button.addEventListener('click', () => {
-      // Remove classe ativa de todos
-      tabButtons.forEach(btn => btn.classList.remove('active'));
-      
-      // Adiciona classe ativa ao botão clicado
-      button.classList.add('active');
+  async function requisitar(url, options = {}) {
+    let response;
+    try {
+      response = await fetch(url, { cache: 'no-store', ...options });
+    } catch (error) {
+      if (error.name === 'AbortError') throw error;
+      throw new Error(options.method
+        ? 'Não foi possível confirmar a operação. Confira a lista antes de enviar novamente.'
+        : 'Não foi possível conectar ao servidor. Confira a conexão e tente novamente.');
+    }
+    const data = await response.json().catch(() => null);
+    if (!response.ok) throw new Error(data?.error || 'Não foi possível concluir a operação. Tente novamente.');
+    if (data === null) throw new Error('O servidor retornou uma resposta inválida. Atualize a lista.');
+    return data;
+  }
 
-      // Aplica o filtro de dimensão
-      dimensaoFiltro = button.getAttribute('data-filter');
+  const enviar = (url, method, body) => requisitar(url, {
+    method, headers: { 'Content-Type': 'application/json' },
+    body: body === undefined ? undefined : JSON.stringify(body)
+  });
+
+  async function carregarLocais() {
+    carregamento?.abort();
+    const controller = new AbortController();
+    carregamento = controller;
+    const timeout = setTimeout(() => controller.abort('timeout'), 12000);
+    atualizar.disabled = true;
+    atualizar.textContent = 'Atualizando…';
+    tabelaCorpo.setAttribute('aria-busy', 'true');
+    try {
+      const locais = await requisitar('/api/locais', { signal: controller.signal });
+      if (!Array.isArray(locais)) throw new Error('A lista recebida do servidor é inválida.');
+      if (controller.signal.aborted) return;
+      locaisCache = locais;
+      carregou = true;
       filtrarERenderizarLocais();
-    });
-  });
-
-  // =========================================================================
-  // CADASTRO DE NOVO LOCAL
-  // =========================================================================
-
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    limparErros();
-
-    const nome = inputNome.value.trim();
-    const x = inputX.value.trim();
-    const y = inputY.value.trim();
-    const z = inputZ.value.trim();
-    const dimensao = selectDimensao.value;
-    const categoria = selectCategoria.value;
-
-    let formValido = true;
-
-    // 1. Validação do Nome
-    if (!nome) {
-      inputNome.classList.add('invalid');
-      errorNome.style.display = 'block';
-      formValido = false;
-    }
-
-    // 2. Validação numérica das coordenadas e limites físicos do Minecraft
-    const numX = Number(x);
-    const numY = Number(y);
-    const numZ = Number(z);
-
-    const coordsInvalidas = 
-      x === '' || isNaN(numX) || numX < -30000000 || numX > 30000000 ||
-      y === '' || isNaN(numY) || numY < -64 || numY > 320 ||
-      z === '' || isNaN(numZ) || numZ < -30000000 || numZ > 30000000;
-
-    if (coordsInvalidas) {
-      inputX.classList.add('invalid');
-      inputY.classList.add('invalid');
-      inputZ.classList.add('invalid');
-      errorCoords.style.display = 'block';
-      formValido = false;
-    }
-
-    // 3. Validação de Dimensão
-    if (!dimensao) {
-      selectDimensao.classList.add('invalid');
-      errorDimensao.style.display = 'block';
-      formValido = false;
-    }
-
-    // 4. Validação de Categoria
-    if (!categoria) {
-      selectCategoria.classList.add('invalid');
-      errorCategoria.style.display = 'block';
-      formValido = false;
-    }
-
-    if (!formValido) return;
-
-    try {
-      const response = await fetch('/api/locais', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          nome,
-          x: numX,
-          y: numY,
-          z: numZ,
-          dimensao,
-          categoria
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Erro ao cadastrar coordenadas.');
+    } catch (error) {
+      if (error.name === 'AbortError' && controller.signal.reason !== 'timeout') return;
+      avisar(controller.signal.reason === 'timeout' ? 'O servidor demorou para responder. Use “Atualizar lista” para tentar novamente.' : error.message, true);
+      if (!carregou) {
+        tabelaCorpo.innerHTML = '<tr class="empty-row"><td colspan="4">Não foi possível carregar os pontos. Use “Atualizar lista” para tentar novamente.</td></tr>';
+        resumo.textContent = 'Lista indisponível';
+      } else {
+        resumo.textContent = 'Falha ao atualizar. A lista abaixo pode estar desatualizada.';
       }
-
-      form.reset();
-      limparErros();
-      await carregarLocais();
-
-    } catch (error) {
-      console.error('Erro na requisição POST:', error);
-      alert(`Erro: ${error.message}`);
-    }
-  });
-
-  // =========================================================================
-  // LOGICA DO MODAL DE EDIÇÃO E EXCLUSÃO (PUT E DELETE)
-  // =========================================================================
-
-  function abrirModalEdicao(local) {
-    limparErros();
-    
-    editId.value = local.id;
-    editNome.value = local.nome;
-    editX.value = local.x;
-    editY.value = local.y;
-    editZ.value = local.z;
-    editDimensao.value = local.dimensao;
-    editCategoria.value = local.categoria || 'Outros';
-
-    editModal.style.display = 'flex';
-  }
-
-  function fecharModalEdicao() {
-    editModal.style.display = 'none';
-    formEditar.reset();
-    limparErros();
-  }
-
-  btnCancelarEdicao.addEventListener('click', fecharModalEdicao);
-
-  editModal.addEventListener('click', (e) => {
-    if (e.target === editModal) {
-      fecharModalEdicao();
-    }
-  });
-
-  formEditar.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    limparErros();
-
-    const id = editId.value;
-    const nome = editNome.value.trim();
-    const x = editX.value.trim();
-    const y = editY.value.trim();
-    const z = editZ.value.trim();
-    const dimensao = editDimensao.value;
-    const categoria = editCategoria.value;
-
-    let modalValido = true;
-
-    if (!nome) {
-      editNome.classList.add('invalid');
-      editErrorNome.style.display = 'block';
-      modalValido = false;
-    }
-
-    const numX = Number(x);
-    const numY = Number(y);
-    const numZ = Number(z);
-
-    const coordsInvalidas = 
-      x === '' || isNaN(numX) || numX < -30000000 || numX > 30000000 ||
-      y === '' || isNaN(numY) || numY < -64 || numY > 320 ||
-      z === '' || isNaN(numZ) || numZ < -30000000 || numZ > 30000000;
-
-    if (coordsInvalidas) {
-      editX.classList.add('invalid');
-      editY.classList.add('invalid');
-      editZ.classList.add('invalid');
-      editErrorCoords.style.display = 'block';
-      modalValido = false;
-    }
-
-    if (!modalValido) return;
-
-    try {
-      const response = await fetch(`/api/locais/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          nome,
-          x: numX,
-          y: numY,
-          z: numZ,
-          dimensao,
-          categoria
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Erro ao atualizar coordenadas.');
+    } finally {
+      clearTimeout(timeout);
+      if (carregamento === controller) {
+        carregamento = null;
+        atualizar.disabled = salvando;
+        atualizar.textContent = 'Atualizar lista';
+        tabelaCorpo.setAttribute('aria-busy', 'false');
       }
-
-      fecharModalEdicao();
-      await carregarLocais();
-    } catch (error) {
-      console.error('Erro na requisição PUT:', error);
-      alert(`Erro: ${error.message}`);
-    }
-  });
-
-  async function deletarLocal(id, nome) {
-    const confirmar = confirm(`Deseja realmente excluir o local "${nome}"?`);
-    if (!confirmar) return;
-
-    try {
-      const response = await fetch(`/api/locais/${id}`, {
-        method: 'DELETE'
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Erro ao excluir coordenadas.');
-      }
-
-      await carregarLocais();
-    } catch (error) {
-      console.error('Erro na requisição DELETE:', error);
-      alert(`Erro: ${error.message}`);
     }
   }
 
-  // =========================================================================
-  // FUNCIONALIDADES EXTRA / AUXILIARES
-  // =========================================================================
-
-  async function copiarComandoTeletransporte(botao, x, y, z) {
-    const comando = `/tp @s ${x} ${y} ${z}`;
-    
-    try {
-      await navigator.clipboard.writeText(comando);
-
-      botao.classList.add('copied');
-      const textSpan = botao.querySelector('.copy-text');
-      const iconSpan = botao.querySelector('.copy-icon');
-
-      textSpan.textContent = 'Copiado!';
-      iconSpan.textContent = '✔';
-
-      setTimeout(() => {
-        botao.classList.remove('copied');
-        textSpan.textContent = 'Copiar /tp';
-        iconSpan.textContent = '📋';
-      }, 2000);
-
-    } catch (error) {
-      console.error('Falha ao copiar comando:', error);
-      alert('Não foi possível copiar automaticamente. Comando: ' + comando);
-    }
+  function normalizar(texto) {
+    return String(texto ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   }
 
-  // Barra de Pesquisa
-  searchInput.addEventListener('input', filtrarERenderizarLocais);
-
-  function limparErros() {
-    inputNome.classList.remove('invalid');
-    inputX.classList.remove('invalid');
-    inputY.classList.remove('invalid');
-    inputZ.classList.remove('invalid');
-    selectDimensao.classList.remove('invalid');
-    selectCategoria.classList.remove('invalid');
-
-    errorNome.style.display = 'none';
-    errorCoords.style.display = 'none';
-    errorDimensao.style.display = 'none';
-    errorCategoria.style.display = 'none';
-
-    editNome.classList.remove('invalid');
-    editX.classList.remove('invalid');
-    editY.classList.remove('invalid');
-    editZ.classList.remove('invalid');
-    editErrorNome.style.display = 'none';
-    editErrorCoords.style.display = 'none';
+  function filtrarERenderizarLocais() {
+    const termo = normalizar(searchInput.value.trim());
+    const filtrados = locaisCache.filter(local =>
+      (dimensaoFiltro === 'Todos' || local.dimensao === dimensaoFiltro)
+      && [local.nome, local.dimensao, local.categoria, local.x, local.y, local.z]
+        .some(valor => normalizar(valor).includes(termo))
+    );
+    resumo.textContent = `${filtrados.length} de ${locaisCache.length} ${locaisCache.length === 1 ? 'ponto' : 'pontos'}`;
+    renderizarTabela(filtrados);
   }
 
   function escaparHTML(texto) {
     const div = document.createElement('div');
-    div.innerText = texto;
+    div.textContent = String(texto ?? '');
     return div.innerHTML;
   }
 
-  // =========================================================================
-  // EXECUÇÃO INICIAL
-  // =========================================================================
+  function renderizarTabela(locais) {
+    tabelaCorpo.replaceChildren();
+    if (!locais.length) {
+      const mensagem = locaisCache.length
+        ? 'Nenhum ponto corresponde à busca ou dimensão selecionada.'
+        : 'Seu próximo destino começa aqui. Cadastre o primeiro ponto ao lado.';
+      tabelaCorpo.innerHTML = `<tr class="empty-row"><td colspan="4">${mensagem}</td></tr>`;
+      return;
+    }
+    const fragment = document.createDocumentFragment();
+    locais.forEach((local, index) => {
+      const tr = document.createElement('tr');
+      tr.className = 'fade-in-item';
+      tr.style.animationDelay = `${Math.min(index, 8) * 0.03}s`;
+      const categoria = local.categoria || 'Outros';
+      const dimensaoClasse = Object.hasOwn(DIMENSOES, local.dimensao) ? local.dimensao.toLowerCase() : '';
+      let portal = '';
+      if (local.dimensao === 'Overworld' || local.dimensao === 'Nether') {
+        const nether = local.dimensao === 'Overworld';
+        const x = nether ? Math.round(local.x / 8) : local.x * 8;
+        const z = nether ? Math.round(local.z / 8) : local.z * 8;
+        portal = `<div class="portal-calc-container ${nether ? 'to-nether' : 'to-overworld'}" title="Referência de X e Z pela proporção 1:8; a posição e a vinculação do portal dependem do mundo.">
+          <span class="portal-calc-label">${nether ? '🔥 Nether' : '🌲 Overworld'}:</span>
+          <span class="portal-calc-coords">X: <span>${x}</span>, Z: <span>${z}</span></span>
+        </div>`;
+      }
+      tr.innerHTML = `
+        <td><div class="local-nome">${escaparHTML(local.nome)}</div>
+          <div class="local-categoria">${Object.hasOwn(EMOJIS, categoria) ? EMOJIS[categoria] : '📍'} ${escaparHTML(categoria)}</div></td>
+        <td data-label="Dimensão"><span class="badge-dimensao ${dimensaoClasse}">${DIMENSOES[local.dimensao] || '📍'} ${escaparHTML(local.dimensao)}</span></td>
+        <td data-label="Coordenadas"><div class="coordinate-details"><div class="coord-badge-container">
+          ${['x', 'y', 'z'].map(axis => `<span class="coord-axis">${axis.toUpperCase()}: <span class="coord-axis-val">${escaparHTML(local[axis])}</span></span>`).join('')}
+        </div>${portal}</div></td>
+        <td class="actions-column"><div class="actions-wrapper">
+          <button type="button" class="btn-copy" title="Copiar comando de teletransporte"><span class="copy-text">Copiar /tp</span><span class="copy-icon" aria-hidden="true">📋</span></button>
+          <button type="button" class="btn-action btn-edit" title="Editar localização">✏️</button>
+          <button type="button" class="btn-action btn-delete" title="Excluir localização">🗑️</button>
+        </div></td>`;
+      const copiar = tr.querySelector('.btn-copy');
+      copiar.setAttribute('aria-label', `Copiar /tp para ${local.nome}`);
+      copiar.addEventListener('click', () => copiarComando(copiar, local));
+      const editar = tr.querySelector('.btn-edit');
+      editar.setAttribute('aria-label', `Editar ${local.nome}`);
+      editar.disabled = salvando;
+      editar.addEventListener('click', () => abrirEdicao(local, editar));
+      const excluir = tr.querySelector('.btn-delete');
+      excluir.setAttribute('aria-label', `Excluir ${local.nome}`);
+      excluir.disabled = salvando;
+      excluir.addEventListener('click', () => {
+        if (salvando) return;
+        excluirPendente = local;
+        ultimoFoco = excluir;
+        $('delete-description').textContent = `Excluir “${local.nome}”? O ponto será removido da lista.`;
+        deleteModal.showModal();
+        $('btn-cancelar-exclusao').focus();
+      });
+      fragment.appendChild(tr);
+    });
+    tabelaCorpo.appendChild(fragment);
+  }
+
+  function limparErros(formulario) {
+    formulario.querySelectorAll('.invalid').forEach(input => {
+      input.classList.remove('invalid');
+      input.removeAttribute('aria-invalid');
+    });
+    formulario.querySelectorAll('.error-msg').forEach(error => { error.style.display = 'none'; });
+  }
+
+  function lerFormulario(formulario, prefixo = '') {
+    limparErros(formulario);
+    let valido = true;
+    const campo = nome => $(prefixo + nome);
+    const invalidar = (inputs, mensagem) => {
+      for (const input of inputs) {
+        input.classList.add('invalid');
+        input.setAttribute('aria-invalid', 'true');
+      }
+      if (mensagem) mensagem.style.display = 'block';
+      valido = false;
+    };
+    const nome = campo('nome').value.trim();
+    if (!nome || nome.length > 120) invalidar([campo('nome')], campo('error-nome'));
+    const coordenadas = ['x', 'y', 'z'].map(axis => campo('coord-' + axis));
+    const numeros = coordenadas.map(input => Number(input.value));
+    const invalidos = coordenadas.filter((input, index) => {
+      const limite = index === 1 ? [-64, 320] : [-30000000, 30000000];
+      return !input.value.trim() || !Number.isFinite(numeros[index]) || numeros[index] < limite[0] || numeros[index] > limite[1];
+    });
+    if (invalidos.length) invalidar(invalidos, campo('error-coords'));
+    if (!Object.hasOwn(DIMENSOES, campo('dimensao').value)) invalidar([campo('dimensao')], campo('error-dimensao'));
+    if (!Object.hasOwn(EMOJIS, campo('categoria').value)) invalidar([campo('categoria')], campo('error-categoria'));
+    if (!valido) {
+      formulario.querySelector('.invalid')?.focus();
+      return null;
+    }
+    return { nome, x: numeros[0], y: numeros[1], z: numeros[2], dimensao: campo('dimensao').value, categoria: campo('categoria').value };
+  }
+
+  function ocupado(ativo, formulario) {
+    salvando = ativo;
+    if (ativo) {
+      carregamento?.abort();
+      tabelaCorpo.setAttribute('aria-busy', 'false');
+    }
+    document.querySelectorAll('form input, form select, form button, .btn-edit, .btn-delete, #btn-confirmar-exclusao, #btn-cancelar-exclusao')
+      .forEach(element => { element.disabled = ativo; });
+    atualizar.disabled = ativo;
+    if (formulario) {
+      formulario.setAttribute('aria-busy', String(ativo));
+      const botao = formulario.querySelector('[type="submit"]');
+      if (ativo) { botao.dataset.original = botao.innerHTML; botao.textContent = 'Salvando…'; }
+      else if (botao.dataset.original) botao.innerHTML = botao.dataset.original;
+    }
+  }
+
+  function registrarFormulario(formulario, prefixo = '') {
+    formulario.addEventListener('submit', async event => {
+      event.preventDefault();
+      if (salvando) return;
+      const dados = lerFormulario(formulario, prefixo);
+      if (!dados) return;
+      feedback.hidden = true;
+      if (prefixo) $('edit-feedback').hidden = true;
+      ocupado(true, formulario);
+      try {
+        const id = prefixo ? $('edit-id').value : null;
+        const salvo = await enviar(id ? `/api/locais/${encodeURIComponent(id)}` : '/api/locais', id ? 'PUT' : 'POST', dados);
+        if (id) locaisCache = locaisCache.map(local => local.id === id ? salvo : local);
+        else locaisCache.push(salvo);
+        formulario.reset();
+        if (prefixo) editModal.close();
+        avisar(`“${salvo.nome}” ${id ? 'atualizado' : 'cadastrado'} com sucesso.`);
+      } catch (error) {
+        avisar(error.message, true);
+      } finally {
+        ocupado(false, formulario);
+        if (carregou) filtrarERenderizarLocais();
+        // Reconciliar com o servidor também após resposta perdida ou conflito.
+        await carregarLocais();
+      }
+    });
+  }
+
+  function abrirEdicao(local, botao) {
+    if (salvando) return;
+    ultimoFoco = botao;
+    limparErros(formEditar);
+    $('edit-feedback').hidden = true;
+    $('edit-id').value = local.id;
+    for (const key of ['nome', 'dimensao', 'categoria']) $('edit-' + key).value = local[key] || (key === 'categoria' ? 'Outros' : '');
+    for (const axis of ['x', 'y', 'z']) $('edit-coord-' + axis).value = local[axis];
+    editModal.showModal();
+    $('edit-nome').focus();
+  }
+
+  for (const modal of [editModal, deleteModal]) {
+    modal.addEventListener('keydown', event => {
+      if (event.key !== 'Tab') return;
+      const campos = [...modal.querySelectorAll('input:not([type="hidden"]):not(:disabled), select:not(:disabled), button:not(:disabled)')];
+      if (!campos.length) { event.preventDefault(); return; }
+      const primeiro = campos[0];
+      const ultimo = campos[campos.length - 1];
+      if (event.shiftKey && document.activeElement === primeiro) {
+        event.preventDefault(); ultimo.focus();
+      } else if (!event.shiftKey && document.activeElement === ultimo) {
+        event.preventDefault(); primeiro.focus();
+      }
+    });
+    modal.addEventListener('cancel', event => { if (salvando) event.preventDefault(); });
+    modal.addEventListener('click', event => {
+      if (event.target !== modal || salvando) return;
+      const rect = modal.getBoundingClientRect();
+      if (event.clientX < rect.left || event.clientX > rect.right || event.clientY < rect.top || event.clientY > rect.bottom) modal.close();
+    });
+    modal.addEventListener('close', () => {
+      if (ultimoFoco?.isConnected) ultimoFoco.focus();
+      else atualizar.focus();
+    });
+  }
+  $('btn-cancelar-edicao').addEventListener('click', () => { if (!salvando) editModal.close(); });
+  $('btn-cancelar-exclusao').addEventListener('click', () => { if (!salvando) deleteModal.close(); });
+  $('btn-confirmar-exclusao').addEventListener('click', async () => {
+    if (salvando || !excluirPendente) return;
+    const local = excluirPendente;
+    ocupado(true);
+    const botao = $('btn-confirmar-exclusao');
+    botao.textContent = 'Excluindo…';
+    try {
+      await enviar(`/api/locais/${encodeURIComponent(local.id)}`, 'DELETE');
+      locaisCache = locaisCache.filter(item => item.id !== local.id);
+      deleteModal.close();
+      excluirPendente = null;
+      avisar(`“${local.nome}” excluído com sucesso.`);
+    } catch (error) {
+      deleteModal.close();
+      avisar(error.message, true);
+    } finally {
+      ocupado(false);
+      botao.textContent = 'Excluir localização';
+      if (carregou) filtrarERenderizarLocais();
+      await carregarLocais();
+    }
+  });
+
+  async function copiarComando(botao, local) {
+    const comando = `/tp @s ${local.x} ${local.y} ${local.z}`;
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error('Clipboard indisponível');
+      await navigator.clipboard.writeText(comando);
+      botao.classList.add('copied');
+      botao.querySelector('.copy-text').textContent = 'Copiado!';
+      botao.setAttribute('aria-label', `Copiado! Comando para ${local.nome}`);
+      avisar('Comando de teletransporte copiado. Use na dimensão correspondente ao ponto.');
+      setTimeout(() => {
+        botao.classList.remove('copied');
+        botao.querySelector('.copy-text').textContent = 'Copiar /tp';
+        botao.setAttribute('aria-label', `Copiar /tp para ${local.nome}`);
+      }, 2000);
+    } catch {
+      avisar(`Copie o comando manualmente: ${comando}`);
+    }
+  }
+
+  tabButtons.forEach(button => button.addEventListener('click', () => {
+    tabButtons.forEach(tab => {
+      tab.classList.toggle('active', tab === button);
+      tab.setAttribute('aria-pressed', String(tab === button));
+    });
+    dimensaoFiltro = button.dataset.filter;
+    if (carregou) filtrarERenderizarLocais();
+  }));
+  searchInput.addEventListener('input', () => { if (carregou) filtrarERenderizarLocais(); });
+  atualizar.addEventListener('click', () => {
+    feedback.hidden = true;
+    carregarLocais();
+  });
+  registrarFormulario(form);
+  registrarFormulario(formEditar, 'edit-');
   carregarLocais();
 });

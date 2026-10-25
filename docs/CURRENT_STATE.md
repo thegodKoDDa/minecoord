@@ -1,9 +1,13 @@
 # Estado atual — 2026-10-25
 
-Reorganização concluída em `/home/gabriel/dev/minecoord`, conforme o padrão estrutural e documental do EletroProjeto, com a stack existente preservada.
+Versão 1.1.0: lapidação do minecoord, preservando Express/CommonJS, frontend estático, identidade visual, endpoints e dados existentes.
 
-Frontend em `frontend/public`; backend em `backend/src` com rotas, validação e persistência separadas; dados privados em `data`. Pasta/pacote com inicial minúscula. Entradas npm e `node server.js` disponíveis.
+Backend: fila de alterações por processo, UUID para novos registros, backup obrigatório e substituição atômica. Validação rejeita vazios/tipos indevidos/não finitos. Erros padronizados em JSON e encerramento gracioso.
 
-Verificações: sintaxe JavaScript aprovada; teste HTTP isolado aprovado para interface, CRUD, validação, 404 e backup. Dados e backup comparados byte a byte com o snapshot original. Continuidade verificada por extração temporária e hashes. Nenhuma dependência reinstalada ou atualizada.
+Frontend: formulários protegidos contra repetição, mensagens e recuperação de erros, busca sem acentos, contagens/atualização, modais acessíveis e layout de pontos em blocos no celular. Tema e fluxos preservados.
 
-Próximo passo: revisar robustez da persistência concorrente, IDs e validação numérica, conforme KNOWN_ISSUES. Nenhum servidor permanente iniciado nesta entrega. Publicação pública do código em `thegodKoDDa/minecoord` autorizada pelo usuário nesta sessão; dados e checkpoints excluídos do Git. Sem validação visual completa no navegador.
+Verificações aprovadas: sintaxe; seis testes Node; três testes Python; Chromium em larguras 320 a 1440, CRUD, edição com erro, busca/filtros, XSS, duplo envio e recuperação. Axe sem violações na tela principal e no modal móvel; capturas inspecionadas. Dados e backup reais preservados byte a byte. Dependências de execução não alteradas.
+
+Código público: thegodKoDDa/minecoord. Dados, backups, configurações privadas, capturas e checkpoints permanecem fora do Git. Servidor local usa porta 3000; conferir HTTP ao retomar.
+
+Próximo passo conforme demanda: testar em outros navegadores/dispositivos e avaliar autenticação ou persistência compartilhada caso o uso evolua. Hoje executar uma instância por pasta de dados. Registro histórico com Y=400 foi mantido; ver KNOWN_ISSUES.

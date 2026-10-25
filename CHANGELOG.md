@@ -1,5 +1,17 @@
 # Histórico de entregas
 
+## 1.1.0 — 2026-10-25
+
+- Corrigidas perda de alterações concorrentes, colisão de IDs e aceitação de coordenadas vazias/tipos indevidos.
+- Escrita por substituição atômica e backup obrigatório; falhas preservam o arquivo principal.
+- Erros HTTP em JSON, limite de corpo, controle de cache e encerramento gracioso.
+- Formulários com estado de envio, mensagens na página, erro de edição no modal e reconciliação da lista.
+- Busca sem acentos, contagens, atualização manual e estados de erro recuperáveis.
+- Modais acessíveis, foco e teclado, confirmação de exclusão e alternativa para copiar comandos.
+- Layout móvel em blocos, campos e contraste ajustados, suporte a movimento reduzido.
+- Testes de API/persistência, validação, recuperação e navegador com dados isolados.
+- Checkpoint ignora capturas e não percorre dependências; restauração rejeita inventário duplicado.
+
 ## 2026-10-25
 
 - Pasta e pacote padronizados como `minecoord`.

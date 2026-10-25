@@ -3,7 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Minecraft Coordinates Hub</title>
+  <title>Minecraft Coordinates Hub · minecoord</title>
+  <meta name="description" content="Salve seus pontos de interesse no Minecraft, filtre por dimensão e encontre as coordenadas equivalentes dos portais.">
+  <meta name="theme-color" content="#0d0e12">
   <!-- Google Fonts para tipografia premium e moderna -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,6 +14,7 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
 
   <div class="app-container">
     <header class="app-header">
@@ -22,7 +25,9 @@
       <p class="subtitle">Guarde e gerencie os pontos de interesse do seu servidor de forma simples e rápida com calculadoras automáticas.</p>
     </header>
 
-    <main class="app-content">
+    <div id="feedback" class="feedback" role="status" aria-live="polite" aria-atomic="true" hidden></div>
+    <noscript><p class="feedback">Ative o JavaScript para consultar e gerenciar seus pontos de interesse.</p></noscript>
+    <main class="app-content" id="conteudo" tabindex="-1">
       <!-- Seção do Formulário de Cadastro -->
       <section class="card-section form-section">
         <div class="card-header">
@@ -33,29 +38,30 @@
         <form id="form-coordenada" novalidate>
           <div class="form-group">
             <label for="nome">Nome do Local</label>
-            <input type="text" id="nome" name="nome" placeholder="Ex: Farm de Ferro, Vila do Deserto" required>
+            <input type="text" id="nome" name="nome" maxlength="120" aria-describedby="error-nome" autocomplete="off" placeholder="Ex: Farm de Ferro, Vila do Deserto" required>
             <span class="error-msg" id="error-nome">O nome do local é obrigatório.</span>
           </div>
 
           <div class="coordinates-grid">
             <div class="form-group">
-              <label for="coord-x">Coordenada X</label>
-              <input type="number" id="coord-x" name="x" placeholder="X" required>
+              <label for="coord-x">X</label>
+              <input type="number" id="coord-x" min="-30000000" max="30000000" step="any" aria-describedby="error-coords" name="x" placeholder="X" required>
             </div>
             <div class="form-group">
-              <label for="coord-y">Coordenada Y (Altura)</label>
-              <input type="number" id="coord-y" name="y" placeholder="Y (-64 a 320)" required>
+              <label for="coord-y">Y (altura)</label>
+              <input type="number" id="coord-y" min="-64" max="320" step="any" aria-describedby="error-coords" name="y" placeholder="Y" required>
             </div>
             <div class="form-group">
-              <label for="coord-z">Coordenada Z</label>
-              <input type="number" id="coord-z" name="z" placeholder="Z" required>
+              <label for="coord-z">Z</label>
+              <input type="number" id="coord-z" min="-30000000" max="30000000" step="any" aria-describedby="error-coords" name="z" placeholder="Z" required>
             </div>
           </div>
-          <span class="error-msg" id="error-coords">As coordenadas X e Z devem ser números válidos, e Y deve estar entre -64 e 320.</span>
+          <p class="field-hint">X e Z: ±30.000.000 · Y: -64 a 320</p>
+          <span class="error-msg" id="error-coords">Preencha X e Z entre -30.000.000 e 30.000.000, e Y entre -64 e 320.</span>
 
           <div class="form-group">
             <label for="dimensao">Dimensão</label>
-            <select id="dimensao" name="dimensao" required>
+            <select id="dimensao" name="dimensao" aria-describedby="error-dimensao" required>
               <option value="" disabled selected>Selecione a Dimensão</option>
               <option value="Overworld">🌲 Overworld</option>
               <option value="Nether">🔥 Nether</option>
@@ -66,7 +72,7 @@
 
           <div class="form-group">
             <label for="categoria">Categoria</label>
-            <select id="categoria" name="categoria" required>
+            <select id="categoria" name="categoria" aria-describedby="error-categoria" required>
               <option value="" disabled selected>Selecione a Categoria</option>
               <option value="Base">🏠 Base</option>
               <option value="Farm">🌾 Farm</option>
@@ -93,26 +99,31 @@
             <p>Lista de locais cadastrados no servidor com integração do Nether.</p>
           </div>
           <div class="search-container">
-            <input type="text" id="search-input" placeholder="Buscar por nome, dimensão ou categoria...">
+            <input id="search-input" type="search" aria-label="Buscar pontos de interesse" placeholder="Buscar nome, coordenadas ou categoria...">
           </div>
         </div>
 
         <!-- Filtros por Dimensão (Abas) -->
-        <div class="tabs-container">
-          <button class="tab-btn active" data-filter="Todos">🌍 Todos</button>
-          <button class="tab-btn" data-filter="Overworld">🌲 Overworld</button>
-          <button class="tab-btn" data-filter="Nether">🔥 Nether</button>
-          <button class="tab-btn" data-filter="End">🌌 End</button>
+        <div class="tabs-container" role="group" aria-label="Filtrar por dimensão">
+          <button class="tab-btn active" aria-pressed="true" data-filter="Todos">🌍 Todos</button>
+          <button class="tab-btn" aria-pressed="false" data-filter="Overworld">🌲 Overworld</button>
+          <button class="tab-btn" aria-pressed="false" data-filter="Nether">🔥 Nether</button>
+          <button class="tab-btn" aria-pressed="false" data-filter="End">🌌 End</button>
         </div>
 
-        <div class="table-container">
+        <div class="list-toolbar">
+          <p id="list-summary" class="list-summary" role="status" aria-live="polite">Carregando pontos…</p>
+          <button type="button" id="btn-atualizar" class="btn-secondary">Atualizar lista</button>
+        </div>
+        <div class="table-container" tabindex="0" role="region" aria-label="Tabela de pontos de interesse">
           <table class="coords-table" id="tabela-coordenadas">
+            <caption class="sr-only">Locais salvos e coordenadas equivalentes dos portais</caption>
             <thead>
               <tr>
-                <th>Nome / Categoria</th>
-                <th>Dimensão</th>
-                <th>Coordenadas / Calculadora Portal (1:8)</th>
-                <th class="actions-column">Ações</th>
+                <th scope="col">Nome / Categoria</th>
+                <th scope="col">Dimensão</th>
+                <th scope="col">Coordenadas / Calculadora Portal (1:8)</th>
+                <th scope="col" class="actions-column">Ações</th>
               </tr>
             </thead>
             <tbody id="tabela-corpo">
@@ -132,38 +143,40 @@
   </div>
 
   <!-- Modal de Edição de Coordenadas -->
-  <div id="edit-modal" class="modal-overlay" style="display: none;">
+  <dialog id="edit-modal" class="modal-overlay" aria-labelledby="edit-title" aria-describedby="edit-description">
     <div class="modal-card">
       <div class="card-header">
-        <h2>✏️ Editar Localização</h2>
-        <p>Altere as informações do ponto de interesse.</p>
+        <h2 id="edit-title">✏️ Editar Localização</h2>
+        <p id="edit-description">Altere as informações do ponto de interesse.</p>
       </div>
 
       <form id="form-editar" novalidate>
+        <p id="edit-feedback" class="feedback feedback-error" role="alert" hidden></p>
         <!-- Campo oculto para armazenar o ID do local sendo editado -->
         <input type="hidden" id="edit-id">
-        
+
         <div class="form-group">
           <label for="edit-nome">Nome do Local</label>
-          <input type="text" id="edit-nome" placeholder="Ex: Farm de Ferro" required>
+          <input type="text" id="edit-nome" maxlength="120" aria-describedby="edit-error-nome" autocomplete="off" placeholder="Ex: Farm de Ferro" required>
           <span class="error-msg" id="edit-error-nome">O nome do local é obrigatório.</span>
         </div>
 
         <div class="coordinates-grid">
           <div class="form-group">
-            <label for="edit-coord-x">Coordenada X</label>
-            <input type="number" id="edit-coord-x" placeholder="X" required>
+            <label for="edit-coord-x">X</label>
+            <input type="number" id="edit-coord-x" min="-30000000" max="30000000" step="any" aria-describedby="edit-error-coords" placeholder="X" required>
           </div>
           <div class="form-group">
-            <label for="edit-coord-y">Coordenada Y (Altura)</label>
-            <input type="number" id="edit-coord-y" placeholder="Y" required>
+            <label for="edit-coord-y">Y (altura)</label>
+            <input type="number" id="edit-coord-y" min="-64" max="320" step="any" aria-describedby="edit-error-coords" placeholder="Y" required>
           </div>
           <div class="form-group">
-            <label for="edit-coord-z">Coordenada Z</label>
-            <input type="number" id="edit-coord-z" placeholder="Z" required>
+            <label for="edit-coord-z">Z</label>
+            <input type="number" id="edit-coord-z" min="-30000000" max="30000000" step="any" aria-describedby="edit-error-coords" placeholder="Z" required>
           </div>
         </div>
-        <span class="error-msg" id="edit-error-coords">As coordenadas X e Z devem ser números válidos, e Y deve estar entre -64 e 320.</span>
+        <p class="field-hint">X e Z: ±30.000.000 · Y: -64 a 320</p>
+        <span class="error-msg" id="edit-error-coords">Preencha X e Z entre -30.000.000 e 30.000.000, e Y entre -64 e 320.</span>
 
         <div class="form-group">
           <label for="edit-dimensao">Dimensão</label>
@@ -195,7 +208,20 @@
         </div>
       </form>
     </div>
-  </div>
+  </dialog>
+
+  <dialog id="delete-modal" class="modal-overlay" aria-labelledby="delete-title" aria-describedby="delete-description">
+    <div class="modal-card">
+      <div class="card-header">
+        <h2 id="delete-title">🗑️ Excluir localização</h2>
+        <p id="delete-description"></p>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" id="btn-cancelar-exclusao" autofocus>Cancelar</button>
+        <button type="button" class="btn-primary btn-danger" id="btn-confirmar-exclusao">Excluir localização</button>
+      </div>
+    </div>
+  </dialog>
 
   <!-- JavaScript Externo -->
   <script src="script.js"></script>

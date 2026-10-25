@@ -7,3 +7,5 @@ data/*
 !.env.example
 coverage/
 *.log
+.artifacts/
+__pycache__/

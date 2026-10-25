@@ -1,40 +1,66 @@
 const fs = require('node:fs/promises');
 const path = require('node:path');
-const DATA_DIR = process.env.DATA_DIR ? path.resolve(process.env.DATA_DIR) : path.resolve(__dirname, '../../../data');
-const DATA_FILE = path.join(DATA_DIR, 'coordenadas.json');
-const BACKUP_FILE = path.join(DATA_DIR, 'coordenadas.backup.json');
+const { randomUUID } = require('node:crypto');
 
-async function lerCoordenadas() {
-  try {
-    const data = await fs.readFile(DATA_FILE, 'utf-8');
-    return JSON.parse(data);
-  } catch (error) {
-    if (error.code === 'ENOENT') {
-      await fs.mkdir(DATA_DIR, { recursive: true });
-      const dataInicial = [];
-      await fs.writeFile(DATA_FILE, JSON.stringify(dataInicial, null, 2), 'utf-8');
-      return dataInicial;
-    }
-    throw error;
-  }
-}
+// Cada processo atende uma única pasta. A fila engloba leitura, alteração e gravação.
+function criarRepositorio(dataDir) {
+  const arquivo = path.join(dataDir, 'coordenadas.json');
+  const backup = path.join(dataDir, 'coordenadas.backup.json');
+  let fila = Promise.resolve();
 
-/**
- * Salva a lista de coordenadas atualizada no arquivo coordenadas.json.
- * Gera automaticamente um arquivo de backup antes de salvar, evitando corrupções.
- */
-async function salvarCoordenadas(coordenadas) {
-  try {
-    // Tenta fazer cópia preventiva (backup) do arquivo atual antes de sobrescrevê-lo
-    await fs.copyFile(DATA_FILE, BACKUP_FILE);
-  } catch (error) {
-    // Se o arquivo original não existir (primeira execução), ignora o erro de backup
-    if (error.code !== 'ENOENT') {
-      console.error('Falha ao criar backup do arquivo coordenadas.json:', error);
+  async function lerArquivo() {
+    try {
+      const original = await fs.readFile(arquivo, 'utf8');
+      const locais = JSON.parse(original);
+      if (!Array.isArray(locais)) throw new Error('O arquivo de coordenadas deve conter uma lista.');
+      return { locais, original };
+    } catch (error) {
+      if (error.code === 'ENOENT') return { locais: [], original: null };
+      throw error;
     }
   }
-  await fs.writeFile(DATA_FILE, JSON.stringify(coordenadas, null, 2), 'utf-8');
+
+  async function gravarAtomico(destino, conteudo) {
+    const temporario = path.join(dataDir, `.${path.basename(destino)}.${randomUUID()}.tmp`);
+    let handle;
+    try {
+      handle = await fs.open(temporario, 'wx', 0o600);
+      await handle.writeFile(conteudo, 'utf8');
+      await handle.sync();
+      await handle.close();
+      handle = null;
+      await fs.rename(temporario, destino);
+    } finally {
+      if (handle) await handle.close();
+      await fs.rm(temporario, { force: true });
+    }
+  }
+
+  async function atualizarCoordenadas(alterar) {
+    const operacao = fila.then(async () => {
+      const { locais, original } = await lerArquivo();
+      const resultado = alterar(locais);
+      const conteudo = JSON.stringify(locais, null, 2) + '\n';
+      await fs.mkdir(dataDir, { recursive: true, mode: 0o700 });
+      // Falha de backup interrompe a operação antes de substituir o arquivo principal.
+      if (original !== null) await gravarAtomico(backup, original);
+      await gravarAtomico(arquivo, conteudo);
+      return resultado;
+    });
+    // Uma falha não bloqueia as próximas operações.
+    fila = operacao.catch(() => {});
+    return operacao;
+  }
+
+  async function lerCoordenadas() {
+    await fila;
+    return (await lerArquivo()).locais;
+  }
+
+  return { lerCoordenadas, atualizarCoordenadas };
 }
 
-
-module.exports = { lerCoordenadas, salvarCoordenadas };
+const dataDir = process.env.DATA_DIR
+  ? path.resolve(process.env.DATA_DIR)
+  : path.resolve(__dirname, '../../../data');
+module.exports = { ...criarRepositorio(dataDir), criarRepositorio };

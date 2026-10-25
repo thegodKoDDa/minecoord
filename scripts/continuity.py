@@ -2,6 +2,8 @@
 import argparse
 import hashlib
 import json
+import os
+import subprocess
 from pathlib import Path
 import tempfile
 import zipfile
@@ -9,7 +11,7 @@ from datetime import datetime, timezone
 
 ROOT = Path(__file__).resolve().parents[1]
 CHECKPOINTS = ROOT / '.checkpoints'
-EXCLUDED = {'node_modules', '.git', '.checkpoints', '__pycache__', 'coverage'}
+EXCLUDED = {'node_modules', '.git', '.checkpoints', '__pycache__', 'coverage', '.artifacts'}
 
 
 def digest(data):
@@ -21,7 +23,7 @@ def verify(folder):
     with tempfile.TemporaryDirectory(prefix='minecoord-restore-') as temp:
         target = Path(temp)
         with zipfile.ZipFile(folder / 'source.zip') as archive:
-            if set(archive.namelist()) != set(manifest):
+            if len(archive.namelist()) != len(manifest) or set(archive.namelist()) != set(manifest):
                 raise ValueError('Inventário do checkpoint diverge do manifesto')
             for name in archive.namelist():
                 if not (target / name).resolve().is_relative_to(target.resolve()):
@@ -43,15 +45,18 @@ def checkpoint():
     pending.mkdir(mode=0o700)
     manifest = {}
     with zipfile.ZipFile(pending / 'source.zip', 'w', zipfile.ZIP_DEFLATED) as archive:
-        for item in sorted(ROOT.rglob('*')):
-            relative = item.relative_to(ROOT)
-            if any(part in EXCLUDED for part in relative.parts) or item.is_symlink() or not item.is_file():
-                continue
-            if item.name.startswith('.env') and item.name != '.env.example':
-                continue
-            data = item.read_bytes()
-            archive.writestr(relative.as_posix(), data)
-            manifest[relative.as_posix()] = digest(data)
+        for directory, folders, files in os.walk(ROOT, followlinks=False):
+            folders[:] = sorted(name for name in folders if name not in EXCLUDED and not (Path(directory) / name).is_symlink())
+            for name in sorted(files):
+                item = Path(directory) / name
+                if item.is_symlink() or not item.is_file():
+                    continue
+                if name.startswith('.env') and name != '.env.example':
+                    continue
+                relative = item.relative_to(ROOT).as_posix()
+                data = item.read_bytes()
+                archive.writestr(relative, data)
+                manifest[relative] = digest(data)
     (pending / 'manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
     for item in pending.iterdir():
         item.chmod(0o600)
@@ -87,6 +92,9 @@ def main():
                 print(f'{name}: {len(entries)} registros')
         latest = CHECKPOINTS / 'latest.json'
         print(f'Último checkpoint: {latest.read_text().strip() if latest.exists() else "ausente"}')
+        git = subprocess.run(['git', 'status', '--short'], cwd=ROOT, capture_output=True, text=True)
+        if git.returncode == 0:
+            print(f'Git: {len(git.stdout.splitlines())} caminhos alterados')
         print('Consulte docs/CURRENT_STATE.md e docs/PROJECT_MEMORY.md.')
 
 

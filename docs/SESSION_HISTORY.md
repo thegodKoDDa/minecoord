@@ -11,3 +11,13 @@ Validação: check de sintaxe e teste CRUD HTTP aprovados; preservação dos arq
 ## 2026-10-25 — Publicação do código
 
 Usuário solicitou repositório público. Destino: `thegodKoDDa/minecoord`. Revisão do conteúdo versionável mantém dados, checkpoints, configurações privadas e dependências fora do Git. Autenticação existente usada sem gravar credenciais no projeto.
+
+## 2026-10-25 — Lapidação 1.1.0
+
+Pedido: retrabalhar e lapidar o projeto preservando suas raízes, código e interface. Snapshot verificado criado antes das alterações.
+
+Causas corrigidas: leitura e escrita fora de transação perdiam alterações concorrentes; Number convertia vazios/booleanos em coordenadas; timestamp não garantia ID exclusivo. A correção usa fila por processo, backup obrigatório, substituição atômica, validação explícita e UUID. JSON inválido não é redefinido.
+
+Interface mantém tema, cores e componentes; recebe mensagens, estados de envio, busca sem acentos, contagens e atualização. Diálogos acessíveis substituem alertas de edição/exclusão; foco, Escape e Tab verificados. Versão móvel usa blocos para evitar ações fora da tela. Falha de edição permanece visível dentro do modal.
+
+Verificações: seis testes Node, três testes Python, runner Chromium com CRUD, duplo envio, filtros, XSS, erros/recuperação e larguras 320/390/768/1024/1440. Axe sem violações nos cenários principal e modal móvel. Capturas inspecionadas; ferramentas instaladas reutilizadas. JSONs reais e backup comparados com snapshot; preservados sem mudança. Limitações atualizadas em KNOWN_ISSUES.
