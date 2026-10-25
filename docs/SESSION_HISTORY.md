@@ -21,3 +21,5 @@ Causas corrigidas: leitura e escrita fora de transação perdiam alterações co
 Interface mantém tema, cores e componentes; recebe mensagens, estados de envio, busca sem acentos, contagens e atualização. Diálogos acessíveis substituem alertas de edição/exclusão; foco, Escape e Tab verificados. Versão móvel usa blocos para evitar ações fora da tela. Falha de edição permanece visível dentro do modal.
 
 Verificações: seis testes Node, três testes Python, runner Chromium com CRUD, duplo envio, filtros, XSS, erros/recuperação e larguras 320/390/768/1024/1440. Axe sem violações nos cenários principal e modal móvel. Capturas inspecionadas; ferramentas instaladas reutilizadas. JSONs reais e backup comparados com snapshot; preservados sem mudança. Limitações atualizadas em KNOWN_ISSUES.
+
+Conferência do encerramento: o primeiro checkpoint pós-lapidação foi íntegro, mas recebeu nome de arquivo por reutilização de variável no percurso. Separado o identificador temporal da variável de arquivo e acrescentado teste de formato. O ponto íntegro anterior foi preservado; o ponteiro final usa novo identificador temporal verificado.

@@ -29,6 +29,7 @@ class ContinuityTests(unittest.TestCase):
             with patch.object(continuity, 'ROOT', root), patch.object(continuity, 'CHECKPOINTS', root / '.checkpoints'), contextlib.redirect_stdout(io.StringIO()):
                 continuity.checkpoint()
                 name = json.loads((root / '.checkpoints/latest.json').read_text())['checkpoint']
+                self.assertRegex(name, r'^\d{8}T\d{12}Z$')
                 point = root / '.checkpoints' / name
                 continuity.verify(point)
                 manifest = json.loads((point / 'manifest.json').read_text())

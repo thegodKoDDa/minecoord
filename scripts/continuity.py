@@ -40,8 +40,8 @@ def verify(folder):
 
 def checkpoint():
     CHECKPOINTS.mkdir(mode=0o700, exist_ok=True)
-    name = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')
-    pending = CHECKPOINTS / ('.pending-' + name)
+    checkpoint_id = datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')
+    pending = CHECKPOINTS / ('.pending-' + checkpoint_id)
     pending.mkdir(mode=0o700)
     manifest = {}
     with zipfile.ZipFile(pending / 'source.zip', 'w', zipfile.ZIP_DEFLATED) as archive:
@@ -61,10 +61,10 @@ def checkpoint():
     for item in pending.iterdir():
         item.chmod(0o600)
     verify(pending)
-    final = CHECKPOINTS / name
+    final = CHECKPOINTS / checkpoint_id
     pending.rename(final)
     pointer = CHECKPOINTS / '.latest.tmp'
-    pointer.write_text(json.dumps({'checkpoint': name}) + '\n')
+    pointer.write_text(json.dumps({'checkpoint': checkpoint_id}) + '\n')
     pointer.chmod(0o600)
     pointer.replace(CHECKPOINTS / 'latest.json')
     print(f'Checkpoint local concluído: {final}')
