@@ -2,16 +2,30 @@
 
 Localizador de coordenadas de Minecraft com Express e interface HTML/CSS/JavaScript. Organização inspirada no EletroProjeto, mantendo a stack e a interface existentes.
 
-## Executar
+## Abrir sem instalar
+
+Baixe o ZIP do GitHub, extraia a pasta e abra o `index.html` da raiz. Não precisa de Node nem internet. O modo local salva no armazenamento do navegador, vinculado ao navegador, perfil e caminho do arquivo. Exporte um backup antes de limpar dados, usar modo privado ou mover a pasta. O comportamento de armazenamento em URLs `file:` varia entre navegadores; validado em Chromium.
+
+## Backups e transporte
+
+Use **Exportar backup** para baixar um JSON com todos os pontos. **Importar pontos** aceita esse formato ou uma lista JSON antiga, adicionando os pontos sem apagar os existentes. O lote inteiro é validado antes de gravar; limite de 5 MB e 10.000 pontos por importação. Cada ponto importado recebe um novo ID: importar o mesmo arquivo novamente duplica os pontos. Alturas históricas são preservadas na importação; novas gravações e edições seguem os limites do formulário.
+
+Os modos navegador e servidor são independentes. Para transportar os dados, exporte de um e importe no outro. Falhas no servidor não ativam automaticamente o modo local.
+
+## Executar com servidor
 
 Requer Node.js 18 ou superior e npm. Na primeira instalação, execute `npm ci`; as dependências existentes foram preservadas nesta reorganização.
 
 ```sh
-cd /home/gabriel/dev/minecoord
+cd minecoord
 npm start
 ```
 
 Acesse http://127.0.0.1:3000. `npm run dev` habilita reinício do backend. Para outra porta, use `PORT=3001 npm start`. Para acesso pela rede, use `HOST=0.0.0.0 npm start`; a aplicação não possui autenticação. `.env.example` documenta as opções; arquivos `.env` não são carregados automaticamente.
+
+## Novidades da versão 1.2
+
+Modo sem instalação; backups portáteis; importação aditiva e atômica; resumo por dimensão; filtro por categoria; ordenação por nome, dimensão ou data; tipografia local sem dependência de serviços externos. API e salvamento JSON existentes preservados. Dependências corrigidas dentro da faixa compatível, sem nova dependência de execução.
 
 ## O que foi lapidado na versão 1.1
 

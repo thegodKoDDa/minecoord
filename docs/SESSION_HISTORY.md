@@ -23,3 +23,13 @@ Interface mantém tema, cores e componentes; recebe mensagens, estados de envio,
 Verificações: seis testes Node, três testes Python, runner Chromium com CRUD, duplo envio, filtros, XSS, erros/recuperação e larguras 320/390/768/1024/1440. Axe sem violações nos cenários principal e modal móvel. Capturas inspecionadas; ferramentas instaladas reutilizadas. JSONs reais e backup comparados com snapshot; preservados sem mudança. Limitações atualizadas em KNOWN_ISSUES.
 
 Conferência do encerramento: o primeiro checkpoint pós-lapidação foi íntegro, mas recebeu nome de arquivo por reutilização de variável no percurso. Separado o identificador temporal da variável de arquivo e acrescentado teste de formato. O ponto íntegro anterior foi preservado; o ponteiro final usa novo identificador temporal verificado.
+
+## 2026-10-25 — Atlas 1.2.0
+
+Pedido de atualização ampla, após discussão do uso direto de index.html. Checkpoint anterior verificado. Implementados abertura pela raiz sem instalação, adaptador localStorage com backup anterior e falhas explícitas, exportação JSON e importação aditiva validada integralmente com transação única no servidor. Preservados contratos CRUD e stack. Interface recebeu resumo por dimensão, ordenação, categorias e indicação do armazenamento; fontes externas removidas. Dependências atualizadas em faixas compatíveis, auditoria zerada.
+
+Validação: sete testes Node incluindo importação atômica, dados legados, quota/backup e corrupção local; três testes Python; sintaxe; Chromium com fluxos anteriores e modo file (CRUD, recarga, download/importação e filtro), axe sem violações. Captura desktop inspecionada. Dados reais não usados em testes. Alterações desta entrega ainda locais, sem push.
+
+## 2026-10-25 — Publicação 1.2 e encerramento
+
+Usuário autorizou o envio da atualização e pediu encerramento organizado. Revisados remoto e branch main, sincronizados antes da entrega, sem divergências. Revisado conteúdo versionável: coordenadas, backup real, checkpoints, dependências, artefatos e credenciais fora do commit. Publicada versão 1.2 com documentação de uso pelo ZIP e limitações reais. Encerramento com checkpoint local e restauração verificada; continuidade não sincroniza Git automaticamente.

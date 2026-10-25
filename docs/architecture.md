@@ -32,3 +32,9 @@ O desktop mantém a tabela; celular usa o mesmo conteúdo em blocos. Há foco vi
 ## Verificação
 
 `npm test` cobre HTTP, concorrência, corrupção, falha de backup e validação. `npm run test:continuity` cobre exclusões, integridade e falha de recuperação. `npm run test:e2e` usa Playwright opcional, dados temporários e porta efêmera. Nenhum teste modifica os JSONs reais.
+
+## Atlas 1.2
+
+`index.html` da raiz encaminha para a interface. `frontend/public/storage.js` escolhe o adaptador pelo protocolo: file usa localStorage; HTTP mantém API. A chave `minecoord.locais.v1` guarda a lista e `minecoord.backup.v1` guarda o conteúdo anterior antes de cada alteração. Falha de backup interrompe a gravação. Corrupção não é redefinida automaticamente. Uma aba editora por vez; não existe transação entre abas.
+
+`POST /api/locais/importar` recebe uma lista, valida todo o lote e adiciona os pontos em uma única transação do repositório. Limite 5 MB e 10.000 pontos, IDs novos. Alturas legadas finitas são aceitas apenas nesse transporte. Endpoints CRUD mantêm contrato. Exportação usa GET existente e JSON versionado no cliente. Importações repetidas são aditivas.

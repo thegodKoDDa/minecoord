@@ -6,10 +6,6 @@
   <title>Minecraft Coordinates Hub · minecoord</title>
   <meta name="description" content="Salve seus pontos de interesse no Minecraft, filtre por dimensão e encontre as coordenadas equivalentes dos portais.">
   <meta name="theme-color" content="#0d0e12">
-  <!-- Google Fonts para tipografia premium e moderna -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
   <!-- CSS Externo -->
   <link rel="stylesheet" href="style.css">
 </head>
@@ -20,11 +16,25 @@
     <header class="app-header">
       <div class="logo-container">
         <span class="cube-icon">🟩</span>
-        <h1>Minecraft <span class="accent-text">Coords Hub</span></h1>
+        <h1>mine<span class="accent-text">coord</span></h1>
       </div>
-      <p class="subtitle">Guarde e gerencie os pontos de interesse do seu servidor de forma simples e rápida com calculadoras automáticas.</p>
+      <p class="subtitle">Seu mundo, bem localizado. Bases, descobertas e caminhos para a próxima aventura.</p>
     </header>
 
+    <section class="overview" aria-label="Resumo do mundo">
+      <div class="world-stat"><span>Seu atlas</span><strong id="stat-total">0 pontos</strong></div>
+      <div class="world-stat"><span>🌲 Overworld</span><strong id="stat-overworld">0</strong></div>
+      <div class="world-stat"><span>🔥 Nether</span><strong id="stat-nether">0</strong></div>
+      <div class="world-stat"><span>🌌 End</span><strong id="stat-end">0</strong></div>
+    </section>
+    <section class="storage-bar" aria-label="Armazenamento e backups">
+      <div><strong id="storage-mode">Armazenamento</strong><p id="storage-description"></p></div>
+      <div class="backup-actions">
+        <button type="button" class="btn-secondary" id="btn-exportar">Exportar backup</button>
+        <button type="button" class="btn-secondary" id="btn-importar">Importar pontos</button>
+        <input type="file" id="arquivo-importar" accept="application/json,.json" hidden>
+      </div>
+    </section>
     <div id="feedback" class="feedback" role="status" aria-live="polite" aria-atomic="true" hidden></div>
     <noscript><p class="feedback">Ative o JavaScript para consultar e gerenciar seus pontos de interesse.</p></noscript>
     <main class="app-content" id="conteudo" tabindex="-1">
@@ -32,7 +42,7 @@
       <section class="card-section form-section">
         <div class="card-header">
           <h2>📍 Cadastrar Novo Ponto</h2>
-          <p>Preencha os campos para salvar as coordenadas no servidor.</p>
+          <p>Marque um destino para encontrar de novo quando precisar.</p>
         </div>
 
         <form id="form-coordenada" novalidate>
@@ -96,7 +106,7 @@
         <div class="card-header list-header">
           <div>
             <h2>📋 Pontos de Interesse</h2>
-            <p>Lista de locais cadastrados no servidor com integração do Nether.</p>
+            <p>Explore seus destinos e as coordenadas equivalentes dos portais.</p>
           </div>
           <div class="search-container">
             <input id="search-input" type="search" aria-label="Buscar pontos de interesse" placeholder="Buscar nome, coordenadas ou categoria...">
@@ -111,6 +121,10 @@
           <button class="tab-btn" aria-pressed="false" data-filter="End">🌌 End</button>
         </div>
 
+        <div class="extra-filters">
+          <label for="filtro-categoria">Categoria<select id="filtro-categoria"><option value="">Todas as categorias</option><option>Base</option><option>Farm</option><option>Portal</option><option>Vila</option><option>Mina</option><option>Outros</option></select></label>
+          <label for="ordenacao">Ordenar<select id="ordenacao"><option value="recentes">Mais recentes</option><option value="nome">Nome A–Z</option><option value="dimensao">Dimensão</option></select></label>
+        </div>
         <div class="list-toolbar">
           <p id="list-summary" class="list-summary" role="status" aria-live="polite">Carregando pontos…</p>
           <button type="button" id="btn-atualizar" class="btn-secondary">Atualizar lista</button>
@@ -224,6 +238,7 @@
   </dialog>
 
   <!-- JavaScript Externo -->
+  <script src="storage.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

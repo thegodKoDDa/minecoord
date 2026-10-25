@@ -8,3 +8,7 @@
 - Testes de navegador foram executados em Chromium, com fontes do sistema. Firefox, Safari e dispositivos físicos não foram verificados.
 - Playwright/axe são ferramentas opcionais; não integram as dependências de execução. O runner aceita instalações existentes por variáveis de ambiente.
 - Checkpoints não incluem Git, DATA_DIR externo, .env privado ou alterações não salvas. Exigem ausência de gravações concorrentes e ficam no mesmo disco. Sincronização Git não faz parte do script de continuidade.
+
+- Modo arquivo depende das regras de localStorage do navegador, perfil e caminho. Dados privados ou removidos pelo navegador podem desaparecer; exportar backups regularmente. A cópia local anterior fica no mesmo armazenamento, não substitui backup externo e não tem restauração automática pela interface.
+- Usar uma aba editora por vez no modo local: não há trava transacional entre abas. Eventos de armazenamento atualizam a lista quando o navegador os disponibiliza.
+- Importação adiciona registros com novos IDs; repetir o arquivo duplica pontos. Modos servidor e navegador não sincronizam automaticamente.

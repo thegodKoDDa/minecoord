@@ -1,6 +1,6 @@
 {
   "name": "minecoord",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Localizador de coordenadas para servidores de Minecraft",
   "main": "backend/src/server.js",
   "scripts": {

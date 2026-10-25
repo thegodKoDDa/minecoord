@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function requisitar(url, options = {}) {
+    if (MinecoordStorage.local) return MinecoordStorage.request(url, options);
     let response;
     try {
       response = await fetch(url, { cache: 'no-store', ...options });
@@ -95,10 +96,15 @@ document.addEventListener('DOMContentLoaded', () => {
   function filtrarERenderizarLocais() {
     const termo = normalizar(searchInput.value.trim());
     const filtrados = locaisCache.filter(local =>
-      (dimensaoFiltro === 'Todos' || local.dimensao === dimensaoFiltro)
+      (!$('filtro-categoria').value || local.categoria === $('filtro-categoria').value)
+      && (dimensaoFiltro === 'Todos' || local.dimensao === dimensaoFiltro)
       && [local.nome, local.dimensao, local.categoria, local.x, local.y, local.z]
         .some(valor => normalizar(valor).includes(termo))
     );
+    const ordem = $('ordenacao').value;
+    filtrados.sort((a, b) => ordem === 'nome' ? a.nome.localeCompare(b.nome, 'pt-BR') : ordem === 'dimensao' ? a.dimensao.localeCompare(b.dimensao) : String(b.criadoEm || '').localeCompare(String(a.criadoEm || '')));
+    $('stat-total').textContent = `${locaisCache.length} ${locaisCache.length === 1 ? 'ponto' : 'pontos'}`;
+    for (const dim of Object.keys(DIMENSOES)) $('stat-' + dim.toLowerCase()).textContent = locaisCache.filter(row => row.dimensao === dim).length;
     resumo.textContent = `${filtrados.length} de ${locaisCache.length} ${locaisCache.length === 1 ? 'ponto' : 'pontos'}`;
     renderizarTabela(filtrados);
   }
@@ -346,6 +352,39 @@ document.addEventListener('DOMContentLoaded', () => {
     feedback.hidden = true;
     carregarLocais();
   });
+  const local = MinecoordStorage.local;
+  $('storage-mode').textContent = local ? 'Salvo neste navegador' : 'Salvo no servidor';
+  $('storage-description').textContent = local
+    ? 'Os pontos ficam neste navegador e neste caminho. Exporte um backup antes de mover a pasta ou limpar os dados.'
+    : 'Seus pontos ficam na pasta de dados do servidor. Exporte um backup para levar para outro dispositivo.';
+  for (const id of ['filtro-categoria', 'ordenacao']) $(id).addEventListener('change', filtrarERenderizarLocais);
+  $('btn-exportar').addEventListener('click', async () => {
+    try {
+      const rows = await requisitar('/api/locais');
+      const blob = new Blob([JSON.stringify({ formato: 'minecoord', versao: 1, exportadoEm: new Date().toISOString(), locais: rows }, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url; anchor.download = `minecoord-${new Date().toISOString().slice(0, 10)}.json`;
+      anchor.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+      avisar('Backup preparado. Confira o arquivo na pasta de downloads.');
+    } catch (error) { avisar(error.message, true); }
+  });
+  $('btn-importar').addEventListener('click', () => $('arquivo-importar').click());
+  $('arquivo-importar').addEventListener('change', async event => {
+    const file = event.target.files[0];
+    if (!file || salvando) return;
+    ocupado(true);
+    $('btn-importar').disabled = true;
+    try {
+      if (file.size > 5 * 1024 * 1024) throw new Error('O backup deve ter no máximo 5 MB.');
+      const content = JSON.parse(await file.text());
+      const rows = MinecoordStorage.validar(Array.isArray(content) ? content : content.locais);
+      const result = await enviar('/api/locais/importar', 'POST', rows);
+      avisar(`${result.importados} pontos importados. Os pontos existentes foram preservados.`);
+    } catch (error) { avisar(error instanceof SyntaxError ? 'Arquivo JSON inválido. Nenhum ponto foi importado.' : error.message, true); }
+    finally { ocupado(false); $('btn-importar').disabled = false; event.target.value = ''; await carregarLocais(); }
+  });
+  window.addEventListener('storage', event => { if (local && event.key === 'minecoord.locais.v1') carregarLocais(); });
   registrarFormulario(form);
   registrarFormulario(formEditar, 'edit-');
   carregarLocais();

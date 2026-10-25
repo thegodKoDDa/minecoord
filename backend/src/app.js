@@ -11,6 +11,7 @@ app.use('/api', (req, res, next) => {
   res.setHeader('Cache-Control', 'no-store');
   next();
 });
+app.use('/api/locais/importar', express.json({ limit: '5mb' }));
 app.use(express.json({ limit: '16kb' }));
 app.use(express.static(path.resolve(__dirname, '../../frontend/public')));
 app.use('/api', require('./routes/locais'));

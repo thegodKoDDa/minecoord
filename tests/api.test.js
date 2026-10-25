@@ -22,6 +22,13 @@ test('interface e ciclo completo da API com dados isolados', async () => {
     }
     assert.deepEqual(await (await request('/api/locais')).json(), []);
     const local = { nome: ' Base teste ', x: 100, y: 64, z: -200, dimensao: 'Overworld', categoria: 'Base' };
+    const incoming = [{ nome: 'Histórico', x: 1, y: 400, z: 2, dimensao: 'End' }];
+    assert.equal((await request('/api/locais/importar', 'POST', [...incoming, { nome: 'Inválido' }])).status, 400);
+    assert.deepEqual(await (await request('/api/locais')).json(), []);
+    assert.equal((await request('/api/locais/importar', 'POST', incoming)).status, 201);
+    const imported = await (await request('/api/locais')).json();
+    assert.equal(imported[0].y, 400);
+    await request(`/api/locais/${imported[0].id}`, 'DELETE');
     const created = await request('/api/locais', 'POST', local);
     assert.equal(created.status, 201);
     const saved = await created.json();

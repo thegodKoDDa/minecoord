@@ -1,13 +1,13 @@
 # Estado atual — 2026-10-25
 
-Versão 1.1.0: lapidação do minecoord, preservando Express/CommonJS, frontend estático, identidade visual, endpoints e dados existentes.
+Versão 1.2.0: atlas local e servidor. Express/CommonJS, frontend sem build e contratos CRUD preservados.
 
-Backend: fila de alterações por processo, UUID para novos registros, backup obrigatório e substituição atômica. Validação rejeita vazios/tipos indevidos/não finitos. Erros padronizados em JSON e encerramento gracioso.
+Abra index.html na raiz após extrair o ZIP para usar sem servidor: localStorage com cópia anterior obrigatória. Modo HTTP usa exclusivamente a API; sem fallback silencioso. Dados separados por modo. Exportação JSON e importação aditiva (5 MB / 10.000 pontos), novos IDs, validação integral antes da gravação. Alturas legadas preservadas na importação; edição mantém política herdada.
 
-Frontend: formulários protegidos contra repetição, mensagens e recuperação de erros, busca sem acentos, contagens/atualização, modais acessíveis e layout de pontos em blocos no celular. Tema e fluxos preservados.
+Interface com resumo por dimensão, filtro de categoria, ordenação e painel de armazenamento/backups. Tema escuro e cores das dimensões preservados. Fontes do sistema; sem chamadas externas obrigatórias.
 
-Verificações aprovadas: sintaxe; seis testes Node; três testes Python; Chromium em larguras 320 a 1440, CRUD, edição com erro, busca/filtros, XSS, duplo envio e recuperação. Axe sem violações na tela principal e no modal móvel; capturas inspecionadas. Dados e backup reais preservados byte a byte. Dependências de execução não alteradas.
+Verificações: sete testes Node, três testes de continuidade, sintaxe, Chromium em 320–1440 px, axe sem violações nos cenários principal e modal. Modo file validado com CRUD, reload, exportação/importação e filtros. Auditoria npm sem vulnerabilidades após atualizações compatíveis.
 
-Código público: thegodKoDDa/minecoord. Dados, backups, configurações privadas, capturas e checkpoints permanecem fora do Git. Servidor local usa porta 3000; conferir HTTP ao retomar.
+Dados reais e backup comparados com o checkpoint anterior: idênticos byte a byte. Entrega 1.2 publicada na branch main de thegodKoDDa/minecoord a pedido do usuário. Dados, backups, credenciais e checkpoints continuam locais. Documentação e instruções de abertura pelo ZIP atualizadas. Ao retomar, executar npm run retomar e iniciar o servidor com npm start se necessário.
 
-Próximo passo conforme demanda: testar em outros navegadores/dispositivos e avaliar autenticação ou persistência compartilhada caso o uso evolua. Hoje executar uma instância por pasta de dados. Registro histórico com Y=400 foi mantido; ver KNOWN_ISSUES.
+Limitações: armazenamento file depende do navegador/perfil/caminho; exportar antes de mover ou limpar. Uma aba editora por vez no modo local; uma instância por DATA_DIR no servidor. Sem autenticação. Firefox/Safari não validados.

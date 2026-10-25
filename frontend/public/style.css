@@ -799,3 +799,30 @@ dialog.modal-overlay .modal-card { width: 100%; max-width: none; max-height: cal
 .coordinates-grid label { font-size: 0.78rem; letter-spacing: 0.3px; white-space: nowrap; }
 .app-container { max-width: 1320px; }
 @media (min-width: 900px) and (max-width: 1099px) { .app-content { grid-template-columns: 1fr; } }
+
+/* Atlas 1.2: hierarquia, resumo e ferramentas de portabilidade. */
+:root { --font-title: 'Trebuchet MS', system-ui, sans-serif; --font-body: system-ui, -apple-system, sans-serif; }
+body { align-items: flex-start; background-attachment: fixed; }
+.app-container { max-width: 1440px; }
+.app-header { text-align: left; padding: 24px 0 6px; }
+.logo-container { justify-content: flex-start; }
+.app-header h1 { font-size: clamp(2.4rem, 5vw, 3.8rem); letter-spacing: -0.06em; }
+.subtitle { margin: 8px 0 0; max-width: 700px; }
+.overview { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.world-stat { background: linear-gradient(135deg, #1b2430, var(--bg-card)); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 20px; display: grid; gap: 8px; }
+.world-stat span { color: var(--text-secondary); font-size: .85rem; }
+.world-stat strong { font-family: var(--font-title); font-size: 1.65rem; }
+.world-stat:nth-child(2) { border-top: 2px solid var(--dim-overworld-text); }
+.world-stat:nth-child(3) { border-top: 2px solid var(--dim-nether-text); }
+.world-stat:nth-child(4) { border-top: 2px solid var(--dim-end-text); }
+.storage-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 20px; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-card); }
+.storage-bar strong { color: var(--color-diamond); font-size: .9rem; }
+.storage-bar p { color: var(--text-secondary); font-size: .82rem; max-width: 650px; margin-top: 4px; }
+.backup-actions { display: flex; flex-wrap: wrap; gap: 8px; flex-shrink: 0; }
+.extra-filters { display: flex; gap: 12px; margin-bottom: 18px; }
+.extra-filters label { display: grid; gap: 6px; color: var(--text-secondary); font-size: .8rem; flex: 1; }
+.extra-filters select { width: 100%; }
+.card-section { box-shadow: 0 12px 35px #0002; }
+.form-section { border-top: 2px solid var(--color-diamond); }
+@media (max-width: 780px) { .storage-bar { align-items: flex-start; flex-direction: column; } .overview { gap: 8px; grid-template-columns: repeat(2, 1fr); } .world-stat { padding: 14px; } }
+@media (max-width: 380px) { .extra-filters { flex-direction: column; } .backup-actions { width: 100%; } .backup-actions button { flex: 1; } }

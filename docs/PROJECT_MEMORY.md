@@ -14,3 +14,5 @@
 - Persistência usa fila por processo, gravação atômica de arquivo e backup obrigatório. Uma instância por DATA_DIR. Novos IDs UUID, anteriores preservados.
 - Limites de coordenadas são política herdada do aplicativo. Registros legados fora dela permanecem; não alterar dados reais para fazer passar testes.
 - Navegador validado em Chromium; ferramentas existentes reutilizadas via PLAYWRIGHT_MODULE/AXE_MODULE, sem reinstalação de dependências.
+
+- Atualização 1.2: usuário solicitou revisão ampla após perguntar sobre abrir index.html. Implementados modo file/localStorage, index raiz, backups portáteis, importação aditiva transacional, filtros/ordenação e resumo visual. Modo HTTP preserva API, sem troca automática de armazenamento. Atualizações compatíveis de dependências corrigiram auditoria npm. Não sincronizar Git automaticamente.

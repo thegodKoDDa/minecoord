@@ -20,3 +20,10 @@
 - Servidor usa loopback por padrão; HOST permite configurar acesso pela rede.
 - Criados documentação, regras do projeto, verificações e checkpoints locais verificáveis.
 - Preservados dados e backup originais, dependências e snapshot anterior à reorganização.
+
+## 1.2.0 — 2026-10-25
+
+- Uso sem instalação pelo index.html da raiz e persistência no navegador.
+- Exportação de backup e importação aditiva, integralmente validada e atômica no servidor.
+- Resumo por dimensão, filtro de categorias, ordenação e painel de armazenamento.
+- Tipografia offline, atualizações de segurança compatíveis e testes de portabilidade/armazenamento.
