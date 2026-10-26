@@ -1,69 +1,95 @@
 # minecoord
 
-Localizador de coordenadas de Minecraft com Express e interface HTML/CSS/JavaScript. Organização inspirada no EletroProjeto, mantendo a stack e a interface existentes.
+Seu mundo, bem localizado. Um atlas de coordenadas para organizar bases, portais e descobertas no Minecraft.
 
-## Abrir sem instalar
+[![Verificações](https://github.com/thegodKoDDa/minecoord/actions/workflows/ci.yml/badge.svg)](https://github.com/thegodKoDDa/minecoord/actions/workflows/ci.yml)
+[![Licença ISC](https://img.shields.io/badge/licen%C3%A7a-ISC-blue.svg)](LICENSE)
 
-Baixe o ZIP do GitHub, extraia a pasta e abra o `index.html` da raiz. Não precisa de Node nem internet. O modo local salva no armazenamento do navegador, vinculado ao navegador, perfil e caminho do arquivo. Exporte um backup antes de limpar dados, usar modo privado ou mover a pasta. O comportamento de armazenamento em URLs `file:` varia entre navegadores; validado em Chromium.
+![Interface do minecoord com pontos de exemplo](docs/assets/preview.png)
 
-## Backups e transporte
+## Recursos
 
-Use **Exportar backup** para baixar um JSON com todos os pontos. **Importar pontos** aceita esse formato ou uma lista JSON antiga, adicionando os pontos sem apagar os existentes. O lote inteiro é validado antes de gravar; limite de 5 MB e 10.000 pontos por importação. Cada ponto importado recebe um novo ID: importar o mesmo arquivo novamente duplica os pontos. Alturas históricas são preservadas na importação; novas gravações e edições seguem os limites do formulário.
+- Cadastro, edição e exclusão de pontos no Overworld, Nether e End.
+- Busca por nome, filtros de dimensão e categoria, ordenação e resumo do atlas.
+- Referência de coordenadas para portais entre Overworld e Nether.
+- Exportação e importação de backups JSON.
+- Interface responsiva, tema escuro e navegação por teclado.
+- Uso direto no navegador ou com servidor local, sem build do frontend.
 
-Os modos navegador e servidor são independentes. Para transportar os dados, exporte de um e importe no outro. Falhas no servidor não ativam automaticamente o modo local.
+## Começar
 
-## Executar com servidor
+### Sem instalação
 
-Requer Node.js 18 ou superior e npm. Na primeira instalação, execute `npm ci`; as dependências existentes foram preservadas nesta reorganização.
+[Baixe o projeto em ZIP](https://github.com/thegodKoDDa/minecoord/archive/refs/heads/main.zip), extraia a pasta e abra o **`index.html` da raiz**. Não precisa de Node.js nem internet.
+
+Os pontos ficam no armazenamento desse navegador. Exporte um backup antes de mover a pasta, trocar de navegador ou limpar os dados. Apenas uma aba pode editar por vez; feche a editora e recarregue outra aba para transferir a edição. Navegadores sem Web Locks permitem consulta e exportação; para salvar, use o modo servidor.
+
+### Com servidor
+
+Requer Node.js 18 ou superior e npm.
 
 ```sh
+git clone https://github.com/thegodKoDDa/minecoord.git
 cd minecoord
+npm ci
 npm start
 ```
 
-Acesse http://127.0.0.1:3000. `npm run dev` habilita reinício do backend. Para outra porta, use `PORT=3001 npm start`. Para acesso pela rede, use `HOST=0.0.0.0 npm start`; a aplicação não possui autenticação. `.env.example` documenta as opções; arquivos `.env` não são carregados automaticamente.
+Abra **http://127.0.0.1:3000**. Os pontos ficam em `data/`, com cópia da versão anterior antes de cada alteração. Execute uma única instância por pasta de dados.
 
-## Novidades da versão 1.2
+## Backups
 
-Modo sem instalação; backups portáteis; importação aditiva e atômica; resumo por dimensão; filtro por categoria; ordenação por nome, dimensão ou data; tipografia local sem dependência de serviços externos. API e salvamento JSON existentes preservados. Dependências corrigidas dentro da faixa compatível, sem nova dependência de execução.
+**Exportar backup** baixa um JSON com todos os pontos. **Importar pontos** aceita esse backup ou uma lista JSON antiga e adiciona os registros sem apagar os existentes. O lote inteiro é validado antes de gravar: até 5 MB e 10.000 pontos por importação.
 
-## O que foi lapidado na versão 1.1
+Importações geram novos IDs; importar o mesmo arquivo novamente duplica os pontos. Os modos navegador e servidor têm dados independentes. Para transferir entre eles, exporte de um e importe no outro.
 
-A identidade original permanece: tema escuro, cores das dimensões, formulário, tabela e calculadora de portais. No celular, os mesmos pontos aparecem em blocos com ações acessíveis. Busca ignora acentos, a lista mostra contagens e permite atualização manual; erros e confirmações aparecem na página.
+## Configuração do servidor
 
-Gravações são serializadas dentro do processo e substituem o JSON por renomeação de um arquivo temporário sincronizado. O backup anterior é obrigatório antes de substituir um arquivo existente. Novos IDs usam UUID; IDs e registros antigos permanecem válidos. Números vazios, tipos indevidos e entradas não finitas são rejeitados.
+Defina as variáveis no ambiente do processo. O arquivo [`.env.example`](.env.example) serve de referência; `.env` não é carregado automaticamente.
 
-Execute **uma única instância por pasta de dados**. A fila é local ao processo; várias instâncias compartilhando DATA_DIR não são suportadas. Os limites aceitos continuam X/Z de ±30.000.000 e Y de -64 a 320; são a política atual do aplicativo. Dados históricos fora desses limites são preservados e precisam ser ajustados pelo usuário para salvar uma edição.
-
-## Estrutura
-
-| Caminho | Responsabilidade |
-| --- | --- |
-| `backend/src/app.js` | Aplicação Express e arquivos estáticos |
-| `backend/src/server.js` | Inicialização HTTP |
-| `backend/src/routes/` | Rotas da API |
-| `backend/src/services/` | Leitura, gravação e backup JSON |
-| `backend/src/validation/` | Validação dos locais |
-| `frontend/public/` | Interface preservada |
-| `data/` | Coordenadas e backup privados, ignorados pelo Git |
-| `tests/` | Teste HTTP com dados temporários |
-| `scripts/` | Verificação e continuidade local |
-| `docs/` | Estado, memória, arquitetura e histórico |
-| `.checkpoints/` | Recuperação local, ignorada pelo Git |
-
-`node server.js` continua funcionando como entrada compatível. As URLs da interface e da API não mudaram. O nome da pasta antiga `Minecoord` mudou para `minecoord`; atalhos externos precisam usar o caminho atual.
-
-## Verificar e continuar
+| Variável | Padrão | Uso |
+| --- | --- | --- |
+| `PORT` | `3000` | Porta HTTP |
+| `HOST` | `127.0.0.1` | Endereço de escuta |
+| `DATA_DIR` | `data/` | Diretório de coordenadas e backup |
+| `AUTH_USER` | `minecoord` | Usuário da autenticação Basic |
+| `AUTH_PASSWORD` | Sem senha local | Senha com pelo menos 16 caracteres; obrigatória fora do loopback |
 
 ```sh
-npm run check
-npm test
-npm run test:continuity
-npm run retomar
-npm run checkpoint
-npm run checkpoint:verify
+PORT=3001 npm start
 ```
 
-Consulte [o estado atual](docs/CURRENT_STATE.md), [a arquitetura](docs/architecture.md) e [a continuidade](docs/continuity.md). Os checkpoints incluem os dados locais padrão. O código público fica em `thegodKoDDa/minecoord`; checkpoints e dados não são enviados ao GitHub.
+Ao configurar uma senha, o navegador solicita as credenciais para abrir a aplicação. Para acesso pela rede, configure `HOST` e `AUTH_PASSWORD` e use HTTPS por proxy reverso para proteger as credenciais em trânsito. A autenticação usa uma conta compartilhada, sem perfis individuais.
 
-O teste opcional de navegador usa uma instalação de Playwright com Chromium disponível. Execute `PLAYWRIGHT_MODULE=/caminho/para/playwright npm run test:e2e`; se Playwright estiver instalado no projeto, basta `npm run test:e2e`. `AXE_MODULE=/caminho/para/@axe-core/playwright` habilita a análise de acessibilidade. Não há dependência nova de execução. Capturas de teste ficam em `.artifacts/`, ignorada pelo Git e pelos checkpoints.
+## Desenvolvimento
+
+Express/CommonJS no backend e HTML, CSS e JavaScript no frontend.
+
+```sh
+npm run dev              # Reinício automático do servidor
+npm run check            # Verificação de sintaxe JavaScript
+npm test                 # API, persistência, validação e autenticação
+npm run test:continuity  # Integridade dos checkpoints locais
+```
+
+Os testes da API usam diretórios temporários e não alteram os dados da aplicação. As verificações também rodam no GitHub Actions. Consulte [o guia de contribuição](CONTRIBUTING.md) para testes de navegador.
+
+| Diretório | Conteúdo |
+| --- | --- |
+| `backend/src/` | Servidor, rotas, autenticação, validação e persistência |
+| `frontend/public/` | Interface e adaptador de armazenamento |
+| `data/` | Dados privados, ignorados pelo Git |
+| `tests/` | Testes automatizados |
+| `scripts/` | Verificações e continuidade local |
+| `docs/` | Documentação e prévia da interface |
+
+## Documentação
+
+- [Arquitetura e API](docs/architecture.md)
+- [Limitações conhecidas](docs/KNOWN_ISSUES.md)
+- [Checkpoints e recuperação](docs/continuity.md)
+- [Histórico de versões](CHANGELOG.md)
+
+## Licença
+
+[ISC](LICENSE).

@@ -1,7 +1,7 @@
 {
   "name": "minecoord",
   "version": "1.2.0",
-  "description": "Localizador de coordenadas para servidores de Minecraft",
+  "description": "Atlas de coordenadas de Minecraft com modo offline e servidor local",
   "main": "backend/src/server.js",
   "scripts": {
     "start": "node backend/src/server.js",
@@ -27,5 +27,13 @@
   },
   "engines": {
     "node": ">=18"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/thegodKoDDa/minecoord.git"
+  },
+  "bugs": {
+    "url": "https://github.com/thegodKoDDa/minecoord/issues"
+  },
+  "homepage": "https://github.com/thegodKoDDa/minecoord#readme"
 }

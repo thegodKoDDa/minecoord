@@ -156,6 +156,19 @@ async function main() {
     await page.getByText('Base offline', { exact: true }).waitFor();
     await page.reload();
     await page.getByText('Base offline', { exact: true }).waitFor();
+    const secondTab = await context.newPage();
+    await secondTab.goto(page.url());
+    const blocked = await secondTab.evaluate(async () => {
+      try {
+        await window.MinecoordStorage.request('/api/locais', { method: 'POST', body: '{}' });
+        return false;
+      } catch (error) { return error.message.includes('Outra aba'); }
+    });
+    assert.equal(blocked, true);
+    assert.equal((await page.evaluate(() => window.MinecoordStorage.request('/api/locais'))).length, 1);
+    await secondTab.close();
+    await page.reload();
+    await page.getByText('Base offline', { exact: true }).waitFor();
     const downloadEvent = page.waitForEvent('download');
     await page.locator('#btn-exportar').click();
     const download = await downloadEvent;

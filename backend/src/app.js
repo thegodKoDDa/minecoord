@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('node:path');
 const app = express();
 app.disable('x-powered-by');
+app.use(require('./auth').criarAutenticacao());
 app.use((req, res, next) => {
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');

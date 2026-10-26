@@ -9,3 +9,9 @@ coverage/
 *.log
 .artifacts/
 __pycache__/
+
+# Registros operacionais locais
+/AGENTS.md
+/docs/CURRENT_STATE.md
+/docs/PROJECT_MEMORY.md
+/docs/SESSION_HISTORY.md

@@ -28,10 +28,29 @@
       return { nome: row.nome.trim(), x: row.x, y: row.y, z: row.z, dimensao: row.dimensao, categoria: row.categoria || 'Outros' };
     });
   }
+  let editor = false;
+  const ready = local && root.navigator?.locks?.request
+    ? new Promise(resolve => {
+      root.navigator.locks.request(KEY, { ifAvailable: true }, lock => {
+        editor = Boolean(lock);
+        resolve();
+        if (lock) return new Promise(() => {});
+      }).catch(() => resolve());
+    }) : Promise.resolve();
   root.MinecoordStorage = {
     local, validar,
     async request(url, options = {}) {
       if (!local) return null;
+      if ((options.method || 'GET') === 'GET') return executar(url, options);
+      if (!root.navigator?.locks?.request) {
+        throw new Error('Este navegador não oferece bloqueio seguro entre abas. Use o modo servidor para salvar; seus pontos continuam disponíveis para exportação.');
+      }
+      await ready;
+      if (!editor) throw new Error('Outra aba está editando estes pontos. Feche a aba editora e recarregue esta página para salvar.');
+      return executar(url, options);
+    }
+  };
+  async function executar(url, options) {
       try {
         const rows = ler();
         const method = options.method || 'GET';
@@ -62,6 +81,5 @@
         }
         throw error;
       }
-    }
-  };
+  }
 })(window);

@@ -1,6 +1,6 @@
 # Arquitetura
 
-Node.js/Express 4 e CommonJS no backend; HTML, CSS e JavaScript no frontend, sem build. A versão 1.1 preserva identidade, dados e URLs da aplicação original.
+Node.js/Express 4 e CommonJS no backend; HTML, CSS e JavaScript no frontend, sem build. Os modos navegador e servidor preservam os mesmos campos de coordenadas.
 
 `server.js` valida PORT, inicia HTTP e encerra de forma graciosa. `app.js` configura estáticos, respostas JSON de erro, cabeçalhos e a API. O router valida os campos e executa alterações pelo repositório; não manipula arquivos diretamente.
 
@@ -10,6 +10,7 @@ Node.js/Express 4 e CommonJS no backend; HTML, CSS e JavaScript no frontend, sem
 | POST | `/api/locais` | Cadastrar; retorna 201 |
 | PUT | `/api/locais/:id` | Editar preservando ID/criadoEm |
 | DELETE | `/api/locais/:id` | Excluir |
+| POST | `/api/locais/importar` | Importar uma lista; retorna 201 |
 
 Erros mantêm `{ "error": "mensagem" }`: 400 para entrada/JSON inválidos, 404 para local/rota inexistente, 413 para corpo acima de 16 KiB e 500 para falha interna. A API usa `Cache-Control: no-store`. Novos IDs são UUID; os anteriores continuam aceitos.
 
@@ -35,6 +36,10 @@ O desktop mantém a tabela; celular usa o mesmo conteúdo em blocos. Há foco vi
 
 ## Atlas 1.2
 
-`index.html` da raiz encaminha para a interface. `frontend/public/storage.js` escolhe o adaptador pelo protocolo: file usa localStorage; HTTP mantém API. A chave `minecoord.locais.v1` guarda a lista e `minecoord.backup.v1` guarda o conteúdo anterior antes de cada alteração. Falha de backup interrompe a gravação. Corrupção não é redefinida automaticamente. Uma aba editora por vez; não existe transação entre abas.
+`index.html` da raiz encaminha para a interface. `frontend/public/storage.js` escolhe o adaptador pelo protocolo: file usa localStorage; HTTP mantém API. A chave `minecoord.locais.v1` guarda a lista e `minecoord.backup.v1` guarda o conteúdo anterior antes de cada alteração. Falha de backup interrompe a gravação. Corrupção não é redefinida automaticamente. Web Locks reserva uma aba editora durante a vida da página. Abas adicionais recusam mutações; fechar a editora e recarregar outra aba transfere a edição. Isso evita cópias locais desatualizadas no modo file. Sem suporte, leitura/exportação continuam disponíveis e mutações são recusadas.
 
 `POST /api/locais/importar` recebe uma lista, valida todo o lote e adiciona os pontos em uma única transação do repositório. Limite 5 MB e 10.000 pontos, IDs novos. Alturas legadas finitas são aceitas apenas nesse transporte. Endpoints CRUD mantêm contrato. Exportação usa GET existente e JSON versionado no cliente. Importações repetidas são aditivas.
+
+## Proteção de acesso
+
+Middleware antes dos estáticos e da API usa autenticação Basic quando AUTH_PASSWORD está definida (mínimo 16 caracteres). AUTH_USER tem padrão minecoord. Comparação usa hashes de tamanho fixo e timingSafeEqual. Acesso fora de loopback sem senha impede inicialização. Credenciais não são persistidas pelo aplicativo. HTTPS deve ser terminado em proxy para uso em rede; Basic não criptografa o transporte.
