@@ -9,7 +9,7 @@ Seu mundo, bem localizado. Um atlas de coordenadas para organizar bases, portais
 
 ## Recursos
 
-- Cadastro, edição e exclusão de pontos no Overworld, Nether e End.
+- Cadastro, edição e exclusão de pontos no Overworld, Nether, End e The Sift.
 - Busca por nome, filtros de dimensão e categoria, ordenação e resumo do atlas.
 - Referência de coordenadas para portais entre Overworld e Nether.
 - Exportação e importação de backups JSON.

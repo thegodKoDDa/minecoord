@@ -18,7 +18,7 @@ test('rejeita campos ausentes, tipos indevidos, números não finitos e limites 
 });
 
 test('aceita zero, decimais, fronteiras e normaliza textos sem perder o contrato', () => {
-  for (const patch of [{ x: -30000000, y: -64, z: 30000000 }, { y: 320 }, { x: '-1.25', y: '0', z: ' 8 ' }]) {
+  for (const patch of [{ x: -30000000, y: -64, z: 30000000 }, { y: 320 }, { x: '-1.25', y: '0', z: ' 8 ' }, { dimensao: 'The Sift' }]) {
     const resultado = validarDadosLocal({ ...base, ...patch });
     assert.equal(resultado.valido, true);
     assert.equal(typeof resultado.dadosFormatados.x, 'number');

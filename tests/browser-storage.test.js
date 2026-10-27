@@ -13,7 +13,7 @@ test('modo local preserva dados se backup falha e rejeita importação inválida
   } };
   vm.runInNewContext(fs.readFileSync('frontend/public/storage.js', 'utf8'), { window });
   const store = window.MinecoordStorage;
-  const point = { nome: 'Base', x: 0, y: 64, z: 0, dimensao: 'Overworld', categoria: 'Base' };
+  const point = { nome: 'Base', x: 0, y: 64, z: 0, dimensao: 'The Sift', categoria: 'Base' };
   await store.request('/api/locais', { method: 'POST', body: JSON.stringify(point) });
   const original = values.get('minecoord.locais.v1');
   failBackup = true;

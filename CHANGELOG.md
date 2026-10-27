@@ -2,6 +2,10 @@
 
 ## Não lançado
 
+### Recursos
+
+- Suporte à nova dimensão **The Sift** no cadastro, edição, filtros, contadores de resumo e importação/exportação de backups.
+
 ### Segurança e confiabilidade
 
 - Autenticação configurável para interface e API; senha obrigatória ao expor o servidor na rede.

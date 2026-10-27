@@ -1,5 +1,5 @@
 const CATEGORIAS_VALIDAS = ['Base', 'Farm', 'Portal', 'Vila', 'Mina', 'Outros'];
-const DIMENSOES_VALIDAS = ['Overworld', 'Nether', 'End'];
+const DIMENSOES_VALIDAS = ['Overworld', 'Nether', 'End', 'The Sift'];
 const LIMITE_NOME = 120;
 
 function numeroValido(valor) {
@@ -28,7 +28,7 @@ function validarDadosLocal(dados) {
     return { valido: false, erro: 'Y deve estar entre -64 e 320.' };
   }
   if (!DIMENSOES_VALIDAS.includes(dimensao)) {
-    return { valido: false, erro: 'Dimensão inválida. Escolha entre: Overworld, Nether ou End.' };
+    return { valido: false, erro: 'Dimensão inválida. Escolha entre: Overworld, Nether, End ou The Sift.' };
   }
   if (categoria !== undefined && categoria !== '' && !CATEGORIAS_VALIDAS.includes(categoria)) {
     return { valido: false, erro: `Categoria inválida. Escolha entre: ${CATEGORIAS_VALIDAS.join(', ')}` };

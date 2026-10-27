@@ -11,7 +11,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const resumo = $('list-summary');
   const tabButtons = document.querySelectorAll('.tab-btn');
   const EMOJIS = { Base: '🏠', Farm: '🌾', Portal: '🚪', Vila: '🏡', Mina: '⛏️', Outros: '📍' };
-  const DIMENSOES = { Overworld: '🌲', Nether: '🔥', End: '🌌' };
+  const DIMENSOES = { Overworld: '🌲', Nether: '🔥', End: '🌌', 'The Sift': '🌀' };
+  const slugDimensao = dim => dim.toLowerCase().replace(/\s+/g, '-');
   let locaisCache = [];
   let dimensaoFiltro = 'Todos';
   let salvando = false;
@@ -104,7 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const ordem = $('ordenacao').value;
     filtrados.sort((a, b) => ordem === 'nome' ? a.nome.localeCompare(b.nome, 'pt-BR') : ordem === 'dimensao' ? a.dimensao.localeCompare(b.dimensao) : String(b.criadoEm || '').localeCompare(String(a.criadoEm || '')));
     $('stat-total').textContent = `${locaisCache.length} ${locaisCache.length === 1 ? 'ponto' : 'pontos'}`;
-    for (const dim of Object.keys(DIMENSOES)) $('stat-' + dim.toLowerCase()).textContent = locaisCache.filter(row => row.dimensao === dim).length;
+    for (const dim of Object.keys(DIMENSOES)) $('stat-' + slugDimensao(dim)).textContent = locaisCache.filter(row => row.dimensao === dim).length;
     resumo.textContent = `${filtrados.length} de ${locaisCache.length} ${locaisCache.length === 1 ? 'ponto' : 'pontos'}`;
     renderizarTabela(filtrados);
   }
@@ -130,7 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
       tr.className = 'fade-in-item';
       tr.style.animationDelay = `${Math.min(index, 8) * 0.03}s`;
       const categoria = local.categoria || 'Outros';
-      const dimensaoClasse = Object.hasOwn(DIMENSOES, local.dimensao) ? local.dimensao.toLowerCase() : '';
+      const dimensaoClasse = Object.hasOwn(DIMENSOES, local.dimensao) ? slugDimensao(local.dimensao) : '';
       let portal = '';
       if (local.dimensao === 'Overworld' || local.dimensao === 'Nether') {
         const nether = local.dimensao === 'Overworld';

@@ -33,6 +33,10 @@
   --dim-end-text: #c084fc;
   --dim-end-border: rgba(168, 85, 247, 0.3);
 
+  --dim-sift-bg: rgba(244, 114, 182, 0.1);
+  --dim-sift-text: #f472b6;
+  --dim-sift-border: rgba(244, 114, 182, 0.3);
+
   /* Estilização Geral */
   --radius-lg: 16px;
   --radius-md: 10px;
@@ -401,6 +405,12 @@ input.invalid:focus, select.invalid:focus {
   border-color: var(--dim-end-border);
 }
 
+.badge-dimensao.the-sift {
+  background-color: var(--dim-sift-bg);
+  color: var(--dim-sift-text);
+  border-color: var(--dim-sift-border);
+}
+
 /* Ações e Botões na Tabela */
 .actions-column {
   width: 200px;
@@ -644,6 +654,12 @@ input.invalid:focus, select.invalid:focus {
   color: var(--dim-end-text);
   box-shadow: 0 0 10px rgba(168, 85, 247, 0.15);
 }
+.tab-btn.active[data-filter="The Sift"] {
+  background-color: var(--dim-sift-bg);
+  border-color: var(--dim-sift-text);
+  color: var(--dim-sift-text);
+  box-shadow: 0 0 10px rgba(244, 114, 182, 0.15);
+}
 
 /* =========================================================================
    ELEMENTOS DE DETALHE DA TABELA
@@ -808,13 +824,14 @@ body { align-items: flex-start; background-attachment: fixed; }
 .logo-container { justify-content: flex-start; }
 .app-header h1 { font-size: clamp(2.4rem, 5vw, 3.8rem); letter-spacing: -0.06em; }
 .subtitle { margin: 8px 0 0; max-width: 700px; }
-.overview { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.overview { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
 .world-stat { background: linear-gradient(135deg, #1b2430, var(--bg-card)); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 20px; display: grid; gap: 8px; }
 .world-stat span { color: var(--text-secondary); font-size: .85rem; }
 .world-stat strong { font-family: var(--font-title); font-size: 1.65rem; }
 .world-stat:nth-child(2) { border-top: 2px solid var(--dim-overworld-text); }
 .world-stat:nth-child(3) { border-top: 2px solid var(--dim-nether-text); }
 .world-stat:nth-child(4) { border-top: 2px solid var(--dim-end-text); }
+.world-stat:nth-child(5) { border-top: 2px solid var(--dim-sift-text); }
 .storage-bar { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 20px; border: 1px solid var(--border-color); border-radius: var(--radius-md); background: var(--bg-card); }
 .storage-bar strong { color: var(--color-diamond); font-size: .9rem; }
 .storage-bar p { color: var(--text-secondary); font-size: .82rem; max-width: 650px; margin-top: 4px; }

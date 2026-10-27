@@ -19,7 +19,7 @@
     if (!Array.isArray(rows) || rows.length > 10000) throw new Error('O backup deve conter uma lista de até 10.000 pontos.');
     return rows.map(row => {
       if (!row || typeof row.nome !== 'string' || !row.nome.trim() || row.nome.trim().length > 120
-        || !['Overworld', 'Nether', 'End'].includes(row.dimensao)
+        || !['Overworld', 'Nether', 'End', 'The Sift'].includes(row.dimensao)
         || !['Base', 'Farm', 'Portal', 'Vila', 'Mina', 'Outros'].includes(row.categoria || 'Outros')
         || !['x', 'y', 'z'].every(axis => typeof row[axis] === 'number' && Number.isFinite(row[axis]))
         || Math.abs(row.x) > 30000000 || Math.abs(row.z) > 30000000) {
