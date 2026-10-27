@@ -18,7 +18,11 @@ Seu mundo, bem localizado. Um atlas de coordenadas para organizar bases, portais
 
 ## Começar
 
-### Sem instalação
+### Online pelo navegador (GitHub Pages)
+
+Acesse diretamente **[https://thegodkodda.github.io/minecoord/](https://thegodkodda.github.io/minecoord/)** para usar o atlas sem baixar ou instalar nada. Os pontos ficam salvos localmente no navegador do seu dispositivo, com exportação e importação de backups JSON.
+
+### Sem instalação (Offline / ZIP)
 
 [Baixe o projeto em ZIP](https://github.com/thegodKoDDa/minecoord/archive/refs/heads/main.zip), extraia a pasta e abra o **`index.html` da raiz**. Não precisa de Node.js nem internet.
 

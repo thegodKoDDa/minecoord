@@ -3,7 +3,7 @@
   'use strict';
   const KEY = 'minecoord.locais.v1';
   const BACKUP = 'minecoord.backup.v1';
-  const local = root.location.protocol === 'file:';
+  const local = root.location.protocol === 'file:' || /\.github\.io$/i.test(root.location.hostname || '');
   function ler() {
     const raw = root.localStorage.getItem(KEY);
     const rows = raw === null ? [] : JSON.parse(raw);

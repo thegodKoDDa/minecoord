@@ -47,4 +47,9 @@ test('segunda aba e navegador sem Web Locks não podem gravar', async () => {
   const unsupported = tab({});
   await assert.rejects(unsupported.request('/api/locais', options), /bloqueio seguro/);
   assert.equal((await unsupported.request('/api/locais')).length, 1);
+  const pagesWindow = { location: { protocol: 'https:', hostname: 'thegodkodda.github.io' }, crypto: { randomUUID }, navigator: { locks }, localStorage: {
+    getItem: key => values.get(key) ?? null, setItem: (key, value) => values.set(key, value)
+  } };
+  vm.runInNewContext(fs.readFileSync('frontend/public/storage.js', 'utf8'), { window: pagesWindow });
+  assert.equal(pagesWindow.MinecoordStorage.local, true);
 });

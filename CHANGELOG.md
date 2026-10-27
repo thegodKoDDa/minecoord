@@ -5,6 +5,7 @@
 ### Recursos
 
 - Suporte à nova dimensão **The Sift** no cadastro, edição, filtros, contadores de resumo e importação/exportação de backups.
+- Suporte a execução estática pelo **GitHub Pages** (`*.github.io`) com armazenamento no navegador e workflow de publicação automática.
 
 ### Segurança e confiabilidade
 
