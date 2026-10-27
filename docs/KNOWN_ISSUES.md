@@ -9,6 +9,6 @@
 - Playwright/axe são ferramentas opcionais; não integram as dependências de execução. O runner aceita instalações existentes por variáveis de ambiente.
 - Checkpoints não incluem Git, DATA_DIR externo, .env privado ou alterações não salvas. Exigem ausência de gravações concorrentes e ficam no mesmo disco. Sincronização Git não faz parte do script de continuidade.
 
-- Modo arquivo depende das regras de localStorage do navegador, perfil e caminho. Dados privados ou removidos pelo navegador podem desaparecer; exportar backups regularmente. A cópia local anterior fica no mesmo armazenamento, não substitui backup externo e não tem restauração automática pela interface.
+- Modo navegador (`file:` e GitHub Pages em `*.github.io`) depende das regras de `localStorage` do navegador, perfil e origem/caminho. Dados privados ou removidos pelo navegador podem desaparecer; exportar backups regularmente. A cópia local anterior fica no mesmo armazenamento, não substitui backup externo e não tem restauração automática pela interface.
 - Web Locks reserva a edição a uma aba do mesmo armazenamento; as demais permitem leitura/exportação. Feche a editora e recarregue outra aba para transferir a edição. Sem suporte, gravações são bloqueadas e leitura/exportação continuam disponíveis. Edições no mesmo ponto usam a última gravação; eventos de armazenamento atualizam a lista quando disponíveis.
 - Importação adiciona registros com novos IDs; repetir o arquivo duplica pontos. Modos servidor e navegador não sincronizam automaticamente.
