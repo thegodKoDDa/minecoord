@@ -1,6 +1,6 @@
 # Histórico de versões
 
-## Não lançado
+## 1.3.0 — 2026-10-27
 
 ### Recursos
 
@@ -10,12 +10,12 @@
 ### Segurança e confiabilidade
 
 - Autenticação configurável para interface e API; senha obrigatória ao expor o servidor na rede.
-- Reserva de uma aba editora no modo arquivo com Web Locks, evitando gravações concorrentes. Sem suporte, consulta e exportação continuam disponíveis.
+- Reserva de uma aba editora no modo navegador com Web Locks, evitando gravações concorrentes. Sem suporte, consulta e exportação continuam disponíveis.
 - Testes de autenticação e bloqueio de edição entre abas.
 
 ### Repositório
 
-- README com prévia da interface, instruções de uso e configuração.
+- README com prévia da interface atualizada, instruções de uso (online, offline e servidor) e configuração.
 - Guia de contribuição, licença ISC e verificações no GitHub Actions.
 - Documentação pública separada dos registros operacionais locais.
 
