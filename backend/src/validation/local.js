@@ -1,6 +1,7 @@
 const CATEGORIAS_VALIDAS = ['Base', 'Farm', 'Portal', 'Vila', 'Mina', 'Outros'];
 const DIMENSOES_VALIDAS = ['Overworld', 'Nether', 'End', 'The Sift'];
 const LIMITE_NOME = 120;
+const LIMITE_NOTAS = 500;
 
 function numeroValido(valor) {
   if (typeof valor === 'number') return Number.isFinite(valor);
@@ -13,7 +14,7 @@ function validarDadosLocal(dados) {
   if (!dados || typeof dados !== 'object' || Array.isArray(dados)) {
     return { valido: false, erro: 'Envie um objeto com os dados da localização.' };
   }
-  const { nome, x, y, z, dimensao, categoria } = dados;
+  const { nome, x, y, z, dimensao, categoria, notas } = dados;
   if (typeof nome !== 'string' || !nome.trim() || nome.trim().length > LIMITE_NOME) {
     return { valido: false, erro: `O nome é obrigatório e deve ter até ${LIMITE_NOME} caracteres.` };
   }
@@ -33,12 +34,24 @@ function validarDadosLocal(dados) {
   if (categoria !== undefined && categoria !== '' && !CATEGORIAS_VALIDAS.includes(categoria)) {
     return { valido: false, erro: `Categoria inválida. Escolha entre: ${CATEGORIAS_VALIDAS.join(', ')}` };
   }
+  let notasLimpa;
+  if (notas !== undefined && notas !== null && notas !== '') {
+    if (typeof notas !== 'string') {
+      return { valido: false, erro: 'As notas devem ser um texto.' };
+    }
+    if (notas.trim().length > LIMITE_NOTAS) {
+      return { valido: false, erro: `As notas devem ter até ${LIMITE_NOTAS} caracteres.` };
+    }
+    notasLimpa = notas.trim();
+  }
+  const dadosFormatados = {
+    nome: nome.trim(), x: coordX, y: coordY, z: coordZ,
+    dimensao, categoria: categoria || 'Outros'
+  };
+  if (notasLimpa) dadosFormatados.notas = notasLimpa;
   return {
     valido: true,
-    dadosFormatados: {
-      nome: nome.trim(), x: coordX, y: coordY, z: coordZ,
-      dimensao, categoria: categoria || 'Outros'
-    }
+    dadosFormatados
   };
 }
 

@@ -46,6 +46,12 @@
           <p>Marque um destino para encontrar de novo quando precisar.</p>
         </div>
 
+        <div class="f3c-quick-action">
+          <button type="button" class="btn-secondary btn-f3c" id="btn-colar-f3c" title="Colar comando F3+C ou /tp copiado do Minecraft">
+            <span>📋 Colar do Minecraft (F3+C)</span>
+          </button>
+        </div>
+
         <form id="form-coordenada" novalidate>
           <div class="form-group">
             <label for="nome">Nome do Local</label>
@@ -96,6 +102,11 @@
             <span class="error-msg" id="error-categoria">Selecione uma categoria.</span>
           </div>
 
+          <div class="form-group">
+            <label for="notas">Anotações <span class="field-optional">(opcional)</span></label>
+            <input type="text" id="notas" name="notas" maxlength="500" autocomplete="off" placeholder="Ex: Baú com diamantes, perto da fortaleza…">
+          </div>
+
           <button type="submit" class="btn-primary" id="btn-submit">
             <span class="btn-text">Salvar Localização</span>
             <span class="btn-icon">💾</span>
@@ -126,7 +137,15 @@
 
         <div class="extra-filters">
           <label for="filtro-categoria">Categoria<select id="filtro-categoria"><option value="">Todas as categorias</option><option>Base</option><option>Farm</option><option>Portal</option><option>Vila</option><option>Mina</option><option>Outros</option></select></label>
-          <label for="ordenacao">Ordenar<select id="ordenacao"><option value="recentes">Mais recentes</option><option value="nome">Nome A–Z</option><option value="dimensao">Dimensão</option></select></label>
+          <label for="ordenacao">Ordenar<select id="ordenacao">
+            <option value="recentes">Mais recentes</option>
+            <option value="antigos">Mais antigos</option>
+            <option value="nome">Nome A–Z</option>
+            <option value="nome-desc">Nome Z–A</option>
+            <option value="dimensao">Dimensão</option>
+            <option value="coord-x">Coordenada X</option>
+            <option value="coord-z">Coordenada Z</option>
+          </select></label>
         </div>
         <div class="list-toolbar">
           <p id="list-summary" class="list-summary" role="status" aria-live="polite">Carregando pontos…</p>
@@ -150,6 +169,23 @@
               </tr>
             </tbody>
           </table>
+        </div>
+        <div class="pagination-bar" id="pagination-container" hidden>
+          <div class="pagination-nav">
+            <button type="button" class="btn-secondary btn-page" id="btn-page-prev" disabled>◀ Anterior</button>
+            <span id="pagination-info" class="pagination-info">Página 1 de 1</span>
+            <button type="button" class="btn-secondary btn-page" id="btn-page-next" disabled>Próxima ▶</button>
+          </div>
+          <div class="pagination-size">
+            <label for="select-page-size">Exibir:
+              <select id="select-page-size">
+                <option value="25" selected>25 por página</option>
+                <option value="50">50 por página</option>
+                <option value="100">100 por página</option>
+                <option value="todos">Todos</option>
+              </select>
+            </label>
+          </div>
         </div>
       </section>
     </main>
@@ -217,6 +253,11 @@
           </select>
         </div>
 
+        <div class="form-group">
+          <label for="edit-notas">Anotações <span class="field-optional">(opcional)</span></label>
+          <input type="text" id="edit-notas" maxlength="500" autocomplete="off" placeholder="Ex: Baú com diamantes, perto da fortaleza…">
+        </div>
+
         <div class="modal-actions">
           <button type="button" class="btn-secondary" id="btn-cancelar-edicao">Cancelar</button>
           <button type="submit" class="btn-primary" id="btn-salvar-edicao">
@@ -238,6 +279,26 @@
         <button type="button" class="btn-secondary" id="btn-cancelar-exclusao" autofocus>Cancelar</button>
         <button type="button" class="btn-primary btn-danger" id="btn-confirmar-exclusao">Excluir localização</button>
       </div>
+    </div>
+  </dialog>
+
+  <dialog id="f3c-modal" class="modal-overlay" aria-labelledby="f3c-title" aria-describedby="f3c-description">
+    <div class="modal-card">
+      <div class="card-header">
+        <h2 id="f3c-title">📋 Colar do Minecraft (F3+C)</h2>
+        <p id="f3c-description">Cole o comando copiado com F3+C no jogo (ex: /execute in minecraft:overworld run tp @s ... ou /tp).</p>
+      </div>
+      <form id="form-f3c" novalidate>
+        <p id="f3c-feedback" class="feedback feedback-error" role="alert" hidden></p>
+        <div class="form-group">
+          <label for="f3c-texto">Texto copiado ou comando</label>
+          <input type="text" id="f3c-texto" autocomplete="off" placeholder="Cole aqui (Ctrl+V) o comando F3+C ou coordenadas" required>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="btn-cancelar-f3c">Cancelar</button>
+          <button type="submit" class="btn-primary" id="btn-confirmar-f3c">Preencher formulário</button>
+        </div>
+      </form>
     </div>
   </dialog>
 

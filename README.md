@@ -10,9 +10,11 @@ Seu mundo, bem localizado. Um atlas de coordenadas para organizar bases, portais
 ## Recursos
 
 - Cadastro, edição e exclusão de pontos no Overworld, Nether, End e The Sift.
-- Busca por nome, filtros de dimensão e categoria, ordenação e resumo do atlas.
-- Referência de coordenadas para portais entre Overworld e Nether.
-- Exportação e importação de backups JSON.
+- Preenchimento rápido via atalho **Colar do Minecraft (F3+C)**, com detecção automática de dimensões e coordenadas.
+- Campo opcional de **anotações / descrição** para detalhes do local (baús, vilas, marcos).
+- Referência de coordenadas e **cópia direta do comando `/tp` de portais** entre Overworld e Nether.
+- Busca por texto (nome, categoria ou anotações), filtros por dimensão e categoria, ordenação flexível e paginação de alta performance.
+- Exportação e importação de backups JSON, com suporte a números inteiros ou decimais.
 - Interface responsiva, tema escuro e navegação por teclado.
 - Uso direto no navegador ou com servidor local, sem build do frontend.
 

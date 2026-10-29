@@ -1,5 +1,20 @@
 # Histórico de versões
 
+## 1.4.0 — 2026-10-29
+
+### Recursos e Usabilidade
+
+- **Atalho Colar do Minecraft (F3+C)**: botão e diálogo de preenchimento inteligente a partir de comandos F3+C ou `/tp` do jogo, detectando dimensões (`Overworld`, `Nether`, `End`, `The Sift`) e coordenadas automaticamente.
+- **Campo de Anotações**: suporte a anotações/descrições de até 500 caracteres nos formulários, API e tabela.
+- **Cópia Rápida de Portais**: botão para copiar o comando `/tp` direto das coordenadas calculadas do portal no Nether ou Overworld.
+- **Novas Opções de Ordenação**: ordenação por mais antigos, nome decrescente (Z–A) e coordenadas X e Z.
+- **Paginação de Alto Desempenho**: controles de paginação (25, 50, 100 ou todos) para navegação fluida em grandes inventários de coordenadas sem sobrecarregar o DOM.
+
+### Validação e Confiabilidade
+
+- **Importação Flexível e Robusta**: suporte a coordenadas numéricas expressas como string ou número em backups e imports JSON.
+- **Validação Unificada no Armazenamento Local**: validação completa de esquema e fronteiras de coordenadas também nas operações POST/PUT locais do `storage.js`.
+
 ## 1.3.0 — 2026-10-27
 
 ### Recursos

@@ -15,18 +15,44 @@
     if (original !== null) root.localStorage.setItem(BACKUP, original);
     root.localStorage.setItem(KEY, JSON.stringify(rows));
   }
+  function validarPonto(row, opcoes = {}) {
+    if (!row || typeof row !== 'object' || Array.isArray(row)) {
+      throw new Error('O backup contém um ponto inválido. Nenhum ponto foi importado.');
+    }
+    if (typeof row.nome !== 'string' || !row.nome.trim() || row.nome.trim().length > 120) {
+      throw new Error('O backup contém um ponto inválido. Nenhum ponto foi importado.');
+    }
+    const num = v => (typeof v === 'number' && Number.isFinite(v))
+      || (typeof v === 'string' && v.trim() && /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i.test(v.trim()) && Number.isFinite(Number(v)));
+    if (!['x', 'y', 'z'].every(axis => num(row[axis]))) {
+      throw new Error('O backup contém um ponto inválido. Nenhum ponto foi importado.');
+    }
+    const [x, y, z] = [Number(row.x), Number(row.y), Number(row.z)];
+    if (Math.abs(x) > 30000000 || Math.abs(z) > 30000000) {
+      throw new Error('O backup contém um ponto inválido. Nenhum ponto foi importado.');
+    }
+    if (!opcoes.permitirAlturaLegada && (y < -64 || y > 320)) {
+      throw new Error('O backup contém um ponto inválido. Nenhum ponto foi importado.');
+    }
+    if (!['Overworld', 'Nether', 'End', 'The Sift'].includes(row.dimensao)) {
+      throw new Error('O backup contém um ponto inválido. Nenhum ponto foi importado.');
+    }
+    if (row.categoria && !['Base', 'Farm', 'Portal', 'Vila', 'Mina', 'Outros'].includes(row.categoria)) {
+      throw new Error('O backup contém um ponto inválido. Nenhum ponto foi importado.');
+    }
+    const item = {
+      nome: row.nome.trim(), x, y, z,
+      dimensao: row.dimensao,
+      categoria: row.categoria || 'Outros'
+    };
+    if (typeof row.notas === 'string' && row.notas.trim()) {
+      item.notas = row.notas.trim().slice(0, 500);
+    }
+    return item;
+  }
   function validar(rows) {
     if (!Array.isArray(rows) || rows.length > 10000) throw new Error('O backup deve conter uma lista de até 10.000 pontos.');
-    return rows.map(row => {
-      if (!row || typeof row.nome !== 'string' || !row.nome.trim() || row.nome.trim().length > 120
-        || !['Overworld', 'Nether', 'End', 'The Sift'].includes(row.dimensao)
-        || !['Base', 'Farm', 'Portal', 'Vila', 'Mina', 'Outros'].includes(row.categoria || 'Outros')
-        || !['x', 'y', 'z'].every(axis => typeof row[axis] === 'number' && Number.isFinite(row[axis]))
-        || Math.abs(row.x) > 30000000 || Math.abs(row.z) > 30000000) {
-        throw new Error('O backup contém um ponto inválido. Nenhum ponto foi importado.');
-      }
-      return { nome: row.nome.trim(), x: row.x, y: row.y, z: row.z, dimensao: row.dimensao, categoria: row.categoria || 'Outros' };
-    });
+    return rows.map(row => validarPonto(row, { permitirAlturaLegada: true }));
   }
   let editor = false;
   const ready = local && root.navigator?.locks?.request
@@ -64,14 +90,18 @@
         const id = decodeURIComponent(url.split('/').pop());
         const index = rows.findIndex(row => row.id === id);
         if (method === 'POST') {
-          const row = { ...body, id: root.crypto.randomUUID(), criadoEm: new Date().toISOString() };
+          const validated = validarPonto(body);
+          const row = { ...validated, id: root.crypto.randomUUID(), criadoEm: new Date().toISOString() };
           gravar([...rows, row]);
           return row;
         }
         if (index < 0) throw new Error('Ponto não encontrado. Atualize a lista.');
         if (method === 'DELETE') { rows.splice(index, 1); gravar(rows); return { id }; }
         if (method === 'PUT') {
-          rows[index] = { ...rows[index], ...body, atualizadoEm: new Date().toISOString() };
+          const validated = validarPonto(body);
+          const anterior = { ...rows[index] };
+          if (body.notas === '' || body.notas === null) delete anterior.notas;
+          rows[index] = { ...anterior, ...validated, atualizadoEm: new Date().toISOString() };
           gravar(rows); return rows[index];
         }
         throw new Error('Operação desconhecida.');

@@ -22,12 +22,12 @@ router.post('/locais/importar', tratar(async (req, res) => {
   const novos = [];
   for (const row of req.body) {
     // Backups históricos podem conter alturas fora da política atual.
+    const coordY = typeof row?.y === 'number' ? row.y : (typeof row?.y === 'string' && row.y.trim() ? Number(row.y) : NaN);
     const validacao = validarDadosLocal(row && { ...row, y: 64 });
-    if (!validacao.valido || typeof row.y !== 'number' || !Number.isFinite(row.y)
-      || !['x', 'z'].every(axis => typeof row[axis] === 'number' && Number.isFinite(row[axis]))) {
+    if (!validacao.valido || !Number.isFinite(coordY)) {
       return res.status(400).json({ error: 'O backup contém um ponto inválido. Nenhum ponto foi importado.' });
     }
-    novos.push({ ...validacao.dadosFormatados, y: row.y, id: randomUUID(), criadoEm: new Date().toISOString() });
+    novos.push({ ...validacao.dadosFormatados, y: coordY, id: randomUUID(), criadoEm: new Date().toISOString() });
   }
   if (novos.length) await atualizarCoordenadas(locais => { locais.push(...novos); });
   res.status(201).json({ importados: novos.length });
@@ -54,8 +54,10 @@ router.put('/locais/:id', tratar(async (req, res) => {
   const atualizado = await atualizarCoordenadas(locais => {
     const indice = locais.findIndex(local => local.id === req.params.id);
     if (indice === -1) throw naoEncontrado();
+    const anterior = { ...locais[indice] };
+    if (req.body.notas === '' || req.body.notas === null) delete anterior.notas;
     locais[indice] = {
-      ...locais[indice], ...validacao.dadosFormatados,
+      ...anterior, ...validacao.dadosFormatados,
       atualizadoEm: new Date().toISOString()
     };
     return locais[indice];

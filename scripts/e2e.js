@@ -45,6 +45,7 @@ async function main() {
     await page.locator('#coord-z').fill('160');
     await page.locator('#dimensao').selectOption('Overworld');
     await page.locator('#categoria').selectOption('Vila');
+    await page.locator('#notas').fill('Perto do ferreiro');
     // Atrasa a resposta para conferir proteção contra submissões repetidas.
     await page.route('**/api/locais', async route => {
       if (route.request().method() === 'POST') {
@@ -58,7 +59,20 @@ async function main() {
     await page.locator('#form-coordenada').evaluate(form => form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
     await page.getByText('1 de 1 ponto', { exact: true }).waitFor();
     assert.equal(await page.locator('.local-nome').count(), 1);
+    assert.match(await page.locator('.local-notas').innerText(), /Perto do ferreiro/);
     assert.match(await page.locator('.portal-calc-coords').innerText(), /X: -10, Z: 20/);
+    await page.locator('.btn-copy-portal').click();
+    await page.locator('#feedback').filter({ hasText: '/tp @s -10 ~ 20' }).waitFor();
+
+    // Testa ação F3+C via diálogo de colagem
+    await page.locator('#btn-colar-f3c').click();
+    await page.locator('#f3c-texto').fill('/execute in minecraft:the_nether run tp @s 100 70 -50 0 0');
+    await page.locator('#btn-confirmar-f3c').click();
+    assert.equal(await page.locator('#coord-x').inputValue(), '100');
+    assert.equal(await page.locator('#coord-y').inputValue(), '70');
+    assert.equal(await page.locator('#coord-z').inputValue(), '-50');
+    assert.equal(await page.locator('#dimensao').inputValue(), 'Nether');
+    await page.locator('#form-coordenada').evaluate(form => form.reset());
     await page.locator('#search-input').fill('coracao');
     assert.equal(await page.locator('.local-nome').count(), 1);
     await page.locator('[data-filter="Nether"]').click();

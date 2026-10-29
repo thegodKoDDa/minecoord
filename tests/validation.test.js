@@ -12,17 +12,18 @@ test('rejeita campos ausentes, tipos indevidos, números não finitos e limites 
       assert.equal(validarDadosLocal({ ...base, [axis]: valor }).valido, false, `${axis}: ${String(valor)}`);
     }
   }
-  for (const patch of [{ x: 30000001 }, { z: -30000001 }, { y: -65 }, { y: 321 }, { nome: ' ' }, { nome: 'a'.repeat(121) }, { dimensao: 'Outro' }, { categoria: null }, { categoria: 'Outro' }]) {
+  for (const patch of [{ x: 30000001 }, { z: -30000001 }, { y: -65 }, { y: 321 }, { nome: ' ' }, { nome: 'a'.repeat(121) }, { dimensao: 'Outro' }, { categoria: null }, { categoria: 'Outro' }, { notas: 123 }, { notas: 'n'.repeat(501) }]) {
     assert.equal(validarDadosLocal({ ...base, ...patch }).valido, false);
   }
 });
 
 test('aceita zero, decimais, fronteiras e normaliza textos sem perder o contrato', () => {
-  for (const patch of [{ x: -30000000, y: -64, z: 30000000 }, { y: 320 }, { x: '-1.25', y: '0', z: ' 8 ' }, { dimensao: 'The Sift' }]) {
+  for (const patch of [{ x: -30000000, y: -64, z: 30000000 }, { y: 320 }, { x: '-1.25', y: '0', z: ' 8 ' }, { dimensao: 'The Sift' }, { notas: ' Baú com diamantes ' }]) {
     const resultado = validarDadosLocal({ ...base, ...patch });
     assert.equal(resultado.valido, true);
     assert.equal(typeof resultado.dadosFormatados.x, 'number');
     assert.equal(resultado.dadosFormatados.categoria, 'Outros');
   }
   assert.equal(validarDadosLocal({ ...base, nome: ' Base ' }).dadosFormatados.nome, 'Base');
+  assert.equal(validarDadosLocal({ ...base, notas: ' Anotação ' }).dadosFormatados.notas, 'Anotação');
 });

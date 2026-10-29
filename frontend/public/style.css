@@ -843,3 +843,112 @@ body { align-items: flex-start; background-attachment: fixed; }
 .form-section { border-top: 2px solid var(--color-diamond); }
 @media (max-width: 780px) { .storage-bar { align-items: flex-start; flex-direction: column; } .overview { gap: 8px; grid-template-columns: repeat(2, 1fr); } .world-stat { padding: 14px; } }
 @media (max-width: 380px) { .extra-filters { flex-direction: column; } .backup-actions { width: 100%; } .backup-actions button { flex: 1; } }
+
+/* Ação rápida F3+C */
+.f3c-quick-action {
+  margin-bottom: 16px;
+}
+.btn-f3c {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  padding: 10px 14px;
+}
+
+/* Indicador de campo opcional */
+.field-optional {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: normal;
+}
+
+/* Anotações do local na tabela */
+.local-notas {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  margin-top: 4px;
+  overflow-wrap: anywhere;
+  max-width: 240px;
+}
+
+/* Botão de cópia rápida no portal calculado */
+.portal-calc-content {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-copy-portal {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+  padding: 2px 7px;
+  font-size: 0.68rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition-fast);
+  margin-left: 6px;
+  white-space: nowrap;
+}
+.btn-copy-portal:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: var(--color-diamond);
+  color: #fff;
+}
+.btn-copy-portal.copied {
+  background: var(--color-success);
+  border-color: var(--color-success);
+  color: #fff;
+}
+
+/* Barra de Paginação */
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 10px 14px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+}
+.pagination-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pagination-info {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  min-width: 90px;
+  text-align: center;
+}
+.btn-page {
+  padding: 6px 12px;
+  font-size: 0.8rem;
+}
+.pagination-size {
+  display: flex;
+  align-items: center;
+}
+.pagination-size label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.pagination-size select {
+  background: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+  font-size: 0.8rem;
+}

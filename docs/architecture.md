@@ -20,13 +20,13 @@ Erros mantêm `{ "error": "mensagem" }`: 400 para entrada/JSON inválidos, 404 p
 
 A fila de alterações engloba leitura, aplicação da operação e gravação. Após serializar a lista, grava bytes anteriores em backup temporário, sincroniza o arquivo e renomeia; repete esse processo para o arquivo principal. Temporários têm nomes UUID, permissões 0600 e são removidos em falhas normais. Falha de backup impede substituir o principal; falha em uma operação não bloqueia a fila. A fila atende um processo, sem bloqueio entre processos e sem promessa de durabilidade contra falha física do disco.
 
-Nomes novos/editados aceitam até 120 caracteres. Coordenadas aceitam números finitos ou strings decimais não vazias, incluindo zero e decimais. Limites existentes são preservados como política do aplicativo; dados históricos não são migrados ou corrigidos automaticamente. Categoria ausente/em branco vira Outros; null e categorias desconhecidas são rejeitados.
+Nomes novos/editados aceitam até 120 caracteres. Coordenadas aceitam números finitos ou strings decimais não vazias, incluindo zero e decimais. Limites existentes são preservados como política do aplicativo; dados históricos não são migrados ou corrigidos automaticamente. Categoria ausente/em branco vira Outros; null e categorias desconhecidas são rejeitados. O campo opcional de anotações aceita até 500 caracteres de texto sanitizado.
 
 ## Interface
 
-O frontend usa funções comuns para requisições, formulários e mensagens. Bloqueia envios repetidos enquanto aguarda resposta, preserva o formulário em falhas e reconcilia a lista após alterações. Requisições de listagem anteriores são canceladas; listagens têm tempo limite de 12 segundos. Busca ignora acentos e conserva filtro/termo após atualização.
+O frontend usa funções comuns para requisições, formulários e mensagens. Bloqueia envios repetidos enquanto aguarda resposta, preserva o formulário em falhas e reconcilia a lista após alterações. Requisições de listagem anteriores são canceladas; listagens têm tempo limite de 12 segundos. Busca ignora acentos, pesquisa por nome, dimensão, categoria e anotações, conservando filtros após atualizações.
 
-Dados textuais são escapados antes de compor a tabela. Os modais nativos têm nomes acessíveis, foco inicial, ciclo de Tab, Escape e retorno de foco. Falhas de edição são mostradas dentro do modal. Cópia indisponível exibe o comando para copiar manualmente. A conversão 1:8 original é uma referência de X/Z, sem garantir vínculo ou destino seguro do portal.
+Dados textuais são escapados antes de compor a tabela. Os modais nativos têm nomes acessíveis, foco inicial, ciclo de Tab, Escape e retorno de foco. Falhas de edição são mostradas dentro do modal. Cópia indisponível exibe o comando para copiar manualmente. A conversão 1:8 original é uma referência de X/Z com atalho de cópia direta do comando `/tp` do portal. Ações de colagem rápida processam comandos do Minecraft (F3+C ou `/tp`) preenchendo automaticamente dimensão e coordenadas. A tabela oferece paginação dinâmica (25, 50, 100 ou todos) para manter renderização veloz mesmo com milhares de pontos.
 
 O desktop mantém a tabela; celular usa o mesmo conteúdo em blocos. Há foco visível, descrição de erros, anúncios de resultado e respeito a movimento reduzido. Fontes externas têm fallback do sistema.
 

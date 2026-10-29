@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const searchInput = $('search-input');
   const editModal = $('edit-modal');
   const deleteModal = $('delete-modal');
+  const f3cModal = $('f3c-modal');
   const feedback = $('feedback');
   const atualizar = $('btn-atualizar');
   const resumo = $('list-summary');
@@ -15,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const slugDimensao = dim => dim.toLowerCase().replace(/\s+/g, '-');
   let locaisCache = [];
   let dimensaoFiltro = 'Todos';
+  let paginaAtual = 1;
   let salvando = false;
   let carregamento;
   let carregou = false;
@@ -90,6 +92,68 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  function parsearComandoMinecraft(raw) {
+    if (typeof raw !== 'string' || !raw.trim()) return null;
+    const texto = raw.trim();
+    let dimensao;
+    if (/\b(?:the_nether|nether)\b/i.test(texto)) dimensao = 'Nether';
+    else if (/\b(?:the_end|end)\b/i.test(texto)) dimensao = 'End';
+    else if (/\b(?:the_sift|sift)\b/i.test(texto)) dimensao = 'The Sift';
+    else if (/\b(?:overworld)\b/i.test(texto)) dimensao = 'Overworld';
+
+    const regexTp = /(?:tp|teleport)(?:\s+@?[a-zA-Z0-9_]+)?\s+([+-]?\d+(?:\.\d+)?)\s+([+-]?\d+(?:\.\d+)?)\s+([+-]?\d+(?:\.\d+)?)/i;
+    let match = texto.match(regexTp);
+
+    if (!match) {
+      const regexXYZ = /X[:=]\s*([+-]?\d+(?:\.\d+)?).*?Y[:=]\s*([+-]?\d+(?:\.\d+)?).*?Z[:=]\s*([+-]?\d+(?:\.\d+)?)/i;
+      match = texto.match(regexXYZ);
+    }
+
+    if (!match) {
+      const regexRaw = /^[^0-9+-]*([+-]?\d+(?:\.\d+)?)[,\s]+([+-]?\d+(?:\.\d+)?)[,\s]+([+-]?\d+(?:\.\d+)?)/;
+      match = texto.match(regexRaw);
+    }
+
+    if (!match) return null;
+    const x = Math.round(Number(match[1]) * 10) / 10;
+    const y = Math.round(Number(match[2]) * 10) / 10;
+    const z = Math.round(Number(match[3]) * 10) / 10;
+    if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) return null;
+    return { x, y, z, dimensao };
+  }
+
+  function aplicarMinecraftF3C(texto) {
+    const parseado = parsearComandoMinecraft(texto);
+    if (!parseado) {
+      throw new Error('Não foi possível identificar coordenadas no texto. Copie com F3+C no jogo ou informe X Y Z.');
+    }
+    $('coord-x').value = parseado.x;
+    $('coord-y').value = parseado.y;
+    $('coord-z').value = parseado.z;
+    if (parseado.dimensao) $('dimensao').value = parseado.dimensao;
+    const dimTexto = parseado.dimensao ? ` Dimensão: ${parseado.dimensao},` : '';
+    avisar(`Coordenadas preenchidas do Minecraft!${dimTexto} X: ${parseado.x}, Y: ${parseado.y}, Z: ${parseado.z}.`);
+    $('coord-x').focus();
+  }
+
+  async function copiarComandoPortal(botao, x, z, dimNome) {
+    const comando = `/tp @s ${x} ~ ${z}`;
+    try {
+      if (!navigator.clipboard?.writeText) throw new Error('Clipboard indisponível');
+      await navigator.clipboard.writeText(comando);
+      botao.classList.add('copied');
+      const textSpan = botao.querySelector('.copy-portal-text');
+      if (textSpan) textSpan.textContent = 'Copiado!';
+      avisar(`Comando de teletransporte para o portal no ${dimNome} copiado (${comando}).`);
+      setTimeout(() => {
+        botao.classList.remove('copied');
+        if (textSpan) textSpan.textContent = 'Copiar /tp portal';
+      }, 2000);
+    } catch {
+      avisar(`Copie o comando do portal manualmente: ${comando}`);
+    }
+  }
+
   function normalizar(texto) {
     return String(texto ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   }
@@ -99,15 +163,45 @@ document.addEventListener('DOMContentLoaded', () => {
     const filtrados = locaisCache.filter(local =>
       (!$('filtro-categoria').value || local.categoria === $('filtro-categoria').value)
       && (dimensaoFiltro === 'Todos' || local.dimensao === dimensaoFiltro)
-      && [local.nome, local.dimensao, local.categoria, local.x, local.y, local.z]
+      && [local.nome, local.dimensao, local.categoria, local.notas, local.x, local.y, local.z]
         .some(valor => normalizar(valor).includes(termo))
     );
     const ordem = $('ordenacao').value;
-    filtrados.sort((a, b) => ordem === 'nome' ? a.nome.localeCompare(b.nome, 'pt-BR') : ordem === 'dimensao' ? a.dimensao.localeCompare(b.dimensao) : String(b.criadoEm || '').localeCompare(String(a.criadoEm || '')));
+    filtrados.sort((a, b) => {
+      if (ordem === 'nome') return a.nome.localeCompare(b.nome, 'pt-BR');
+      if (ordem === 'nome-desc') return b.nome.localeCompare(a.nome, 'pt-BR');
+      if (ordem === 'dimensao') return a.dimensao.localeCompare(b.dimensao);
+      if (ordem === 'antigos') return String(a.criadoEm || '').localeCompare(String(b.criadoEm || ''));
+      if (ordem === 'coord-x') return (Number(a.x) || 0) - (Number(b.x) || 0);
+      if (ordem === 'coord-z') return (Number(a.z) || 0) - (Number(b.z) || 0);
+      return String(b.criadoEm || '').localeCompare(String(a.criadoEm || ''));
+    });
+
+    const totalItens = filtrados.length;
+    const paginacaoContainer = $('pagination-container');
+    const selectSize = $('select-page-size');
+    const tamanhoConfig = selectSize ? selectSize.value : '25';
+    const limite = tamanhoConfig === 'todos' ? totalItens : (parseInt(tamanhoConfig, 10) || 25);
+    const totalPaginas = Math.max(1, Math.ceil(totalItens / Math.max(1, limite)));
+    if (paginaAtual > totalPaginas) paginaAtual = totalPaginas;
+    if (paginaAtual < 1) paginaAtual = 1;
+
+    const inicio = (paginaAtual - 1) * limite;
+    const paginados = filtrados.slice(inicio, inicio + limite);
+
+    if (totalItens > 25) {
+      paginacaoContainer.hidden = false;
+      $('pagination-info').textContent = `Página ${paginaAtual} de ${totalPaginas}`;
+      $('btn-page-prev').disabled = paginaAtual <= 1;
+      $('btn-page-next').disabled = paginaAtual >= totalPaginas;
+    } else {
+      paginacaoContainer.hidden = true;
+    }
+
     $('stat-total').textContent = `${locaisCache.length} ${locaisCache.length === 1 ? 'ponto' : 'pontos'}`;
     for (const dim of Object.keys(DIMENSOES)) $('stat-' + slugDimensao(dim)).textContent = locaisCache.filter(row => row.dimensao === dim).length;
-    resumo.textContent = `${filtrados.length} de ${locaisCache.length} ${locaisCache.length === 1 ? 'ponto' : 'pontos'}`;
-    renderizarTabela(filtrados);
+    resumo.textContent = `${totalItens} de ${locaisCache.length} ${locaisCache.length === 1 ? 'ponto' : 'pontos'}${totalItens > limite ? ` (exibindo ${paginados.length})` : ''}`;
+    renderizarTabela(paginados);
   }
 
   function escaparHTML(texto) {
@@ -138,13 +232,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const x = nether ? Math.round(local.x / 8) : local.x * 8;
         const z = nether ? Math.round(local.z / 8) : local.z * 8;
         portal = `<div class="portal-calc-container ${nether ? 'to-nether' : 'to-overworld'}" title="Referência de X e Z pela proporção 1:8; a posição e a vinculação do portal dependem do mundo.">
-          <span class="portal-calc-label">${nether ? '🔥 Nether' : '🌲 Overworld'}:</span>
-          <span class="portal-calc-coords">X: <span>${x}</span>, Z: <span>${z}</span></span>
+          <div class="portal-calc-content">
+            <span class="portal-calc-label">${nether ? '🔥 Nether' : '🌲 Overworld'}:</span>
+            <span class="portal-calc-coords">X: <span>${x}</span>, Z: <span>${z}</span></span>
+          </div>
+          <button type="button" class="btn-copy-portal" title="Copiar /tp para o portal equivalente"><span class="copy-portal-text">Copiar /tp portal</span></button>
         </div>`;
       }
+      const notasHTML = local.notas
+        ? `<div class="local-notas" title="Anotações do local">📝 ${escaparHTML(local.notas)}</div>`
+        : '';
       tr.innerHTML = `
         <td><div class="local-nome">${escaparHTML(local.nome)}</div>
-          <div class="local-categoria">${Object.hasOwn(EMOJIS, categoria) ? EMOJIS[categoria] : '📍'} ${escaparHTML(categoria)}</div></td>
+          <div class="local-categoria">${Object.hasOwn(EMOJIS, categoria) ? EMOJIS[categoria] : '📍'} ${escaparHTML(categoria)}</div>
+          ${notasHTML}</td>
         <td data-label="Dimensão"><span class="badge-dimensao ${dimensaoClasse}">${DIMENSOES[local.dimensao] || '📍'} ${escaparHTML(local.dimensao)}</span></td>
         <td data-label="Coordenadas"><div class="coordinate-details"><div class="coord-badge-container">
           ${['x', 'y', 'z'].map(axis => `<span class="coord-axis">${axis.toUpperCase()}: <span class="coord-axis-val">${escaparHTML(local[axis])}</span></span>`).join('')}
@@ -157,6 +258,14 @@ document.addEventListener('DOMContentLoaded', () => {
       const copiar = tr.querySelector('.btn-copy');
       copiar.setAttribute('aria-label', `Copiar /tp para ${local.nome}`);
       copiar.addEventListener('click', () => copiarComando(copiar, local));
+      const copiarPortal = tr.querySelector('.btn-copy-portal');
+      if (copiarPortal) {
+        const nether = local.dimensao === 'Overworld';
+        const px = nether ? Math.round(local.x / 8) : local.x * 8;
+        const pz = nether ? Math.round(local.z / 8) : local.z * 8;
+        copiarPortal.setAttribute('aria-label', `Copiar /tp portal para ${local.nome}`);
+        copiarPortal.addEventListener('click', () => copiarComandoPortal(copiarPortal, px, pz, nether ? 'Nether' : 'Overworld'));
+      }
       const editar = tr.querySelector('.btn-edit');
       editar.setAttribute('aria-label', `Editar ${local.nome}`);
       editar.disabled = salvando;
@@ -212,7 +321,13 @@ document.addEventListener('DOMContentLoaded', () => {
       formulario.querySelector('.invalid')?.focus();
       return null;
     }
-    return { nome, x: numeros[0], y: numeros[1], z: numeros[2], dimensao: campo('dimensao').value, categoria: campo('categoria').value };
+    const notas = campo('notas')?.value?.trim() || '';
+    return {
+      nome, x: numeros[0], y: numeros[1], z: numeros[2],
+      dimensao: campo('dimensao').value,
+      categoria: campo('categoria').value,
+      notas
+    };
   }
 
   function ocupado(ativo, formulario) {
@@ -268,11 +383,12 @@ document.addEventListener('DOMContentLoaded', () => {
     $('edit-id').value = local.id;
     for (const key of ['nome', 'dimensao', 'categoria']) $('edit-' + key).value = local[key] || (key === 'categoria' ? 'Outros' : '');
     for (const axis of ['x', 'y', 'z']) $('edit-coord-' + axis).value = local[axis];
+    $('edit-notas').value = local.notas || '';
     editModal.showModal();
     $('edit-nome').focus();
   }
 
-  for (const modal of [editModal, deleteModal]) {
+  for (const modal of [editModal, deleteModal, f3cModal]) {
     modal.addEventListener('keydown', event => {
       if (event.key !== 'Tab') return;
       const campos = [...modal.querySelectorAll('input:not([type="hidden"]):not(:disabled), select:not(:disabled), button:not(:disabled)')];
@@ -298,6 +414,38 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   $('btn-cancelar-edicao').addEventListener('click', () => { if (!salvando) editModal.close(); });
   $('btn-cancelar-exclusao').addEventListener('click', () => { if (!salvando) deleteModal.close(); });
+  $('btn-cancelar-f3c').addEventListener('click', () => { f3cModal.close(); });
+
+  $('btn-colar-f3c').addEventListener('click', async () => {
+    ultimoFoco = $('btn-colar-f3c');
+    try {
+      if (navigator.clipboard?.readText) {
+        const texto = await navigator.clipboard.readText();
+        if (texto && texto.trim()) {
+          aplicarMinecraftF3C(texto);
+          return;
+        }
+      }
+      throw new Error('Clipboard indisponível ou vazio');
+    } catch {
+      $('f3c-feedback').hidden = true;
+      $('f3c-texto').value = '';
+      f3cModal.showModal();
+      $('f3c-texto').focus();
+    }
+  });
+
+  $('form-f3c').addEventListener('submit', event => {
+    event.preventDefault();
+    const texto = $('f3c-texto').value;
+    try {
+      aplicarMinecraftF3C(texto);
+      f3cModal.close();
+    } catch (err) {
+      $('f3c-feedback').textContent = err.message;
+      $('f3c-feedback').hidden = false;
+    }
+  });
   $('btn-confirmar-exclusao').addEventListener('click', async () => {
     if (salvando || !excluirPendente) return;
     const local = excluirPendente;
@@ -346,19 +494,40 @@ document.addEventListener('DOMContentLoaded', () => {
       tab.setAttribute('aria-pressed', String(tab === button));
     });
     dimensaoFiltro = button.dataset.filter;
+    paginaAtual = 1;
     if (carregou) filtrarERenderizarLocais();
   }));
-  searchInput.addEventListener('input', () => { if (carregou) filtrarERenderizarLocais(); });
+  searchInput.addEventListener('input', () => {
+    paginaAtual = 1;
+    if (carregou) filtrarERenderizarLocais();
+  });
   atualizar.addEventListener('click', () => {
     feedback.hidden = true;
     carregarLocais();
+  });
+  $('btn-page-prev').addEventListener('click', () => {
+    if (paginaAtual > 1) {
+      paginaAtual--;
+      filtrarERenderizarLocais();
+    }
+  });
+  $('btn-page-next').addEventListener('click', () => {
+    paginaAtual++;
+    filtrarERenderizarLocais();
+  });
+  $('select-page-size').addEventListener('change', () => {
+    paginaAtual = 1;
+    filtrarERenderizarLocais();
   });
   const local = MinecoordStorage.local;
   $('storage-mode').textContent = local ? 'Salvo neste navegador' : 'Salvo no servidor';
   $('storage-description').textContent = local
     ? 'Os pontos ficam neste navegador e neste caminho. Exporte um backup antes de mover a pasta ou limpar os dados.'
     : 'Seus pontos ficam na pasta de dados do servidor. Exporte um backup para levar para outro dispositivo.';
-  for (const id of ['filtro-categoria', 'ordenacao']) $(id).addEventListener('change', filtrarERenderizarLocais);
+  for (const id of ['filtro-categoria', 'ordenacao']) $(id).addEventListener('change', () => {
+    paginaAtual = 1;
+    filtrarERenderizarLocais();
+  });
   $('btn-exportar').addEventListener('click', async () => {
     try {
       const rows = await requisitar('/api/locais');
