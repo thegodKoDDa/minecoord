@@ -1,7 +1,9 @@
 const CATEGORIAS_VALIDAS = ['Base', 'Farm', 'Portal', 'Vila', 'Mina', 'Outros'];
 const DIMENSOES_VALIDAS = ['Overworld', 'Nether', 'End', 'The Sift'];
+const CORES_VALIDAS = ['#38bdf8', '#10b981', '#ef4444', '#f59e0b', '#a855f7', '#f472b6', '#9ca3af'];
 const LIMITE_NOME = 120;
 const LIMITE_NOTAS = 500;
+const LIMITE_MUNDO = 40;
 
 function numeroValido(valor) {
   if (typeof valor === 'number') return Number.isFinite(valor);
@@ -14,7 +16,7 @@ function validarDadosLocal(dados) {
   if (!dados || typeof dados !== 'object' || Array.isArray(dados)) {
     return { valido: false, erro: 'Envie um objeto com os dados da localização.' };
   }
-  const { nome, x, y, z, dimensao, categoria, notas } = dados;
+  const { nome, x, y, z, dimensao, categoria, notas, mundo, favorito, cor } = dados;
   if (typeof nome !== 'string' || !nome.trim() || nome.trim().length > LIMITE_NOME) {
     return { valido: false, erro: `O nome é obrigatório e deve ter até ${LIMITE_NOME} caracteres.` };
   }
@@ -44,11 +46,34 @@ function validarDadosLocal(dados) {
     }
     notasLimpa = notas.trim();
   }
+  let mundoLimpo = 'Principal';
+  if (mundo !== undefined && mundo !== null && mundo !== '') {
+    if (typeof mundo !== 'string') {
+      return { valido: false, erro: 'O nome do mundo deve ser um texto.' };
+    }
+    if (mundo.trim().length > LIMITE_MUNDO) {
+      return { valido: false, erro: `O nome do mundo deve ter até ${LIMITE_MUNDO} caracteres.` };
+    }
+    mundoLimpo = mundo.trim() || 'Principal';
+  }
+  let corValida;
+  if (cor !== undefined && cor !== null && cor !== '') {
+    if (typeof cor !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(cor.trim())) {
+      return { valido: false, erro: 'A cor deve estar em formato hexadecimal (#RRGGBB).' };
+    }
+    corValida = cor.trim().toLowerCase();
+  }
+  if (favorito !== undefined && favorito !== null && typeof favorito !== 'boolean') {
+    return { valido: false, erro: 'O campo favorito deve ser um booleano.' };
+  }
   const dadosFormatados = {
     nome: nome.trim(), x: coordX, y: coordY, z: coordZ,
-    dimensao, categoria: categoria || 'Outros'
+    dimensao, categoria: categoria || 'Outros',
+    mundo: mundoLimpo,
+    favorito: Boolean(favorito)
   };
   if (notasLimpa) dadosFormatados.notas = notasLimpa;
+  if (corValida) dadosFormatados.cor = corValida;
   return {
     valido: true,
     dadosFormatados

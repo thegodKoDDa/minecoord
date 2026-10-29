@@ -1,6 +1,6 @@
 {
   "name": "minecoord",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "description": "Atlas de coordenadas de Minecraft com modo offline e servidor local",
   "main": "backend/src/server.js",
   "scripts": {
@@ -18,6 +18,9 @@
     "minecraft",
     "express",
     "coordinates",
+    "radar",
+    "waypoints",
+    "stronghold",
     "json"
   ],
   "author": "",

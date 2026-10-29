@@ -14,9 +14,23 @@
 
   <div class="app-container">
     <header class="app-header">
-      <div class="logo-container">
-        <span class="cube-icon">🟩</span>
-        <h1>mine<span class="accent-text">coord</span></h1>
+      <div class="logo-row">
+        <div class="logo-container">
+          <span class="cube-icon">🟩</span>
+          <h1>mine<span class="accent-text">coord</span></h1>
+        </div>
+        <div class="header-tools">
+          <div class="world-selector-container">
+            <label for="seletor-mundo" class="sr-only">Filtrar por mundo</label>
+            <select id="seletor-mundo" class="select-mundo" title="Filtrar pontos por mundo">
+              <option value="">🌍 Todos os mundos</option>
+              <option value="Principal" selected>Mundo: Principal</option>
+            </select>
+            <button type="button" class="btn-secondary btn-sm" id="btn-novo-mundo" title="Criar novo mundo">+ Mundo</button>
+          </div>
+          <button type="button" class="btn-secondary btn-sm" id="btn-abrir-stronghold" title="Calcular localização da Stronghold (portal do End)">🧭 Stronghold</button>
+          <button type="button" class="btn-secondary btn-sm btn-audio" id="btn-audio-toggle" title="Ativar ou desativar efeitos sonoros" aria-pressed="true">🔊 Sons</button>
+        </div>
       </div>
       <p class="subtitle">Seu mundo, bem localizado. Bases, descobertas e caminhos para a próxima aventura.</p>
     </header>
@@ -33,7 +47,8 @@
       <div class="backup-actions">
         <button type="button" class="btn-secondary" id="btn-exportar">Exportar backup</button>
         <button type="button" class="btn-secondary" id="btn-importar">Importar pontos</button>
-        <input type="file" id="arquivo-importar" accept="application/json,.json" hidden>
+        <button type="button" class="btn-secondary btn-sm" id="btn-abrir-mods" title="Exportar ou importar waypoints de mods de minimapa">📦 Mods</button>
+        <input type="file" id="arquivo-importar" accept="application/json,.json,.txt" hidden>
       </div>
     </section>
     <div id="feedback" class="feedback" role="status" aria-live="polite" aria-atomic="true" hidden></div>
@@ -102,9 +117,37 @@
             <span class="error-msg" id="error-categoria">Selecione uma categoria.</span>
           </div>
 
+          <div class="form-row-dual">
+            <div class="form-group">
+              <label for="mundo">Mundo / Save</label>
+              <select id="mundo" name="mundo">
+                <option value="Principal">Principal</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="cor">Cor do Marcador</label>
+              <select id="cor" name="cor">
+                <option value="#38bdf8">💎 Diamante (Azul)</option>
+                <option value="#10b981">🌲 Esmeralda (Verde)</option>
+                <option value="#ef4444">🔥 Redstone (Vermelho)</option>
+                <option value="#f59e0b">⭐ Ouro (Dourado)</option>
+                <option value="#a855f7">🌌 Ametista (Roxo)</option>
+                <option value="#f472b6">🌀 The Sift (Rosa)</option>
+                <option value="#9ca3af">⛏️ Ardósia (Cinza)</option>
+              </select>
+            </div>
+          </div>
+
           <div class="form-group">
             <label for="notas">Anotações <span class="field-optional">(opcional)</span></label>
             <input type="text" id="notas" name="notas" maxlength="500" autocomplete="off" placeholder="Ex: Baú com diamantes, perto da fortaleza…">
+          </div>
+
+          <div class="form-group-checkbox">
+            <label class="checkbox-label" for="favorito">
+              <input type="checkbox" id="favorito" name="favorito">
+              <span>⭐ Fixar nos favoritos (topo da lista)</span>
+            </label>
           </div>
 
           <button type="submit" class="btn-primary" id="btn-submit">
@@ -121,8 +164,14 @@
             <h2>📋 Pontos de Interesse</h2>
             <p>Explore seus destinos e as coordenadas equivalentes dos portais.</p>
           </div>
-          <div class="search-container">
-            <input id="search-input" type="search" aria-label="Buscar pontos de interesse" placeholder="Buscar nome, coordenadas ou categoria...">
+          <div class="list-header-actions">
+            <div class="view-switcher" role="group" aria-label="Modo de visualização">
+              <button type="button" class="btn-view active" id="btn-view-table" aria-pressed="true">📋 Tabela</button>
+              <button type="button" class="btn-view" id="btn-view-radar" aria-pressed="false">🗺️ Radar 2D</button>
+            </div>
+            <div class="search-container">
+              <input id="search-input" type="search" aria-label="Buscar pontos de interesse" placeholder="Buscar nome, coordenadas, mundo ou notas...">
+            </div>
           </div>
         </div>
 
@@ -135,11 +184,24 @@
           <button class="tab-btn" aria-pressed="false" data-filter="The Sift">🌀 The Sift</button>
         </div>
 
+        <!-- Barra de Bússola e Posição do Jogador -->
+        <div class="player-position-bar" id="player-position-bar">
+          <div class="player-pos-row">
+            <span class="compass-badge">🧭 Minha Posição:</span>
+            <input type="number" id="player-x" placeholder="X" step="any" aria-label="Minha coordenada X" title="Sua coordenada X atual">
+            <input type="number" id="player-z" placeholder="Z" step="any" aria-label="Minha coordenada Z" title="Sua coordenada Z atual">
+            <button type="button" class="btn-secondary btn-sm" id="btn-player-f3c" title="Preencher minha posição colando do F3+C">Colar F3+C</button>
+            <button type="button" class="btn-secondary btn-sm" id="btn-player-limpar" title="Limpar posição atual">✕</button>
+          </div>
+          <span class="player-pos-hint" id="player-pos-status">Informe X e Z para calcular distância em blocos e direção cardeal.</span>
+        </div>
+
         <div class="extra-filters">
           <label for="filtro-categoria">Categoria<select id="filtro-categoria"><option value="">Todas as categorias</option><option>Base</option><option>Farm</option><option>Portal</option><option>Vila</option><option>Mina</option><option>Outros</option></select></label>
           <label for="ordenacao">Ordenar<select id="ordenacao">
             <option value="recentes">Mais recentes</option>
             <option value="antigos">Mais antigos</option>
+            <option value="distancia">🧭 Mais próximos de mim</option>
             <option value="nome">Nome A–Z</option>
             <option value="nome-desc">Nome Z–A</option>
             <option value="dimensao">Dimensão</option>
@@ -169,6 +231,18 @@
               </tr>
             </tbody>
           </table>
+        </div>
+        <!-- Visualização de Radar 2D Interativo -->
+        <div class="radar-container" id="radar-container" hidden>
+          <div class="radar-toolbar">
+            <div class="radar-buttons">
+              <button type="button" class="btn-secondary btn-sm" id="btn-radar-zoom-in" title="Aproximar">🔍 +</button>
+              <button type="button" class="btn-secondary btn-sm" id="btn-radar-zoom-out" title="Afastar">🔍 −</button>
+              <button type="button" class="btn-secondary btn-sm" id="btn-radar-center" title="Centralizar pontos">🎯 Centralizar</button>
+            </div>
+            <div class="radar-legend" id="radar-legend">Arraste para mover o mapa · Roda do mouse para zoom</div>
+          </div>
+          <canvas id="radar-canvas" class="radar-canvas" height="460"></canvas>
         </div>
         <div class="pagination-bar" id="pagination-container" hidden>
           <div class="pagination-nav">
@@ -253,9 +327,37 @@
           </select>
         </div>
 
+        <div class="form-row-dual">
+          <div class="form-group">
+            <label for="edit-mundo">Mundo / Save</label>
+            <select id="edit-mundo">
+              <option value="Principal">Principal</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="edit-cor">Cor do Marcador</label>
+            <select id="edit-cor">
+              <option value="#38bdf8">💎 Diamante (Azul)</option>
+              <option value="#10b981">🌲 Esmeralda (Verde)</option>
+              <option value="#ef4444">🔥 Redstone (Vermelho)</option>
+              <option value="#f59e0b">⭐ Ouro (Dourado)</option>
+              <option value="#a855f7">🌌 Ametista (Roxo)</option>
+              <option value="#f472b6">🌀 The Sift (Rosa)</option>
+              <option value="#9ca3af">⛏️ Ardósia (Cinza)</option>
+            </select>
+          </div>
+        </div>
+
         <div class="form-group">
           <label for="edit-notas">Anotações <span class="field-optional">(opcional)</span></label>
           <input type="text" id="edit-notas" maxlength="500" autocomplete="off" placeholder="Ex: Baú com diamantes, perto da fortaleza…">
+        </div>
+
+        <div class="form-group-checkbox">
+          <label class="checkbox-label" for="edit-favorito">
+            <input type="checkbox" id="edit-favorito">
+            <span>⭐ Fixar nos favoritos (topo da lista)</span>
+          </label>
         </div>
 
         <div class="modal-actions">
@@ -302,7 +404,96 @@
     </div>
   </dialog>
 
+  <!-- Modal Triangulador de Stronghold -->
+  <dialog id="stronghold-modal" class="modal-overlay" aria-labelledby="stronghold-title" aria-describedby="stronghold-desc">
+    <div class="modal-card">
+      <div class="card-header">
+        <h2 id="stronghold-title">🧭 Triangulador de Stronghold</h2>
+        <p id="stronghold-desc">Encontre as coordenadas da fortaleza do End jogando dois Olhos do Fim.</p>
+      </div>
+      <form id="form-stronghold" novalidate>
+        <p id="stronghold-feedback" class="feedback feedback-error" role="alert" hidden></p>
+        <div class="stronghold-step">
+          <span class="step-title">1º Lançamento do Olho</span>
+          <div class="coordinates-grid">
+            <div class="form-group"><label for="st-x1">X</label><input type="number" id="st-x1" step="any" placeholder="X" required></div>
+            <div class="form-group"><label for="st-z1">Z</label><input type="number" id="st-z1" step="any" placeholder="Z" required></div>
+            <div class="form-group"><label for="st-ang1">Ângulo Yaw (°)</label><input type="number" id="st-ang1" step="any" placeholder="Ex: -45.2" required></div>
+          </div>
+        </div>
+        <div class="stronghold-step">
+          <span class="step-title">2º Lançamento (após andar 150+ blocos para o lado)</span>
+          <div class="coordinates-grid">
+            <div class="form-group"><label for="st-x2">X</label><input type="number" id="st-x2" step="any" placeholder="X" required></div>
+            <div class="form-group"><label for="st-z2">Z</label><input type="number" id="st-z2" step="any" placeholder="Z" required></div>
+            <div class="form-group"><label for="st-ang2">Ângulo Yaw (°)</label><input type="number" id="st-ang2" step="any" placeholder="Ex: -52.8" required></div>
+          </div>
+        </div>
+        <div id="stronghold-resultado" class="stronghold-result" hidden>
+          <div class="result-badge">
+            <strong>Fortaleza estimada:</strong>
+            <span id="st-resultado-coords">X: 0, Z: 0</span>
+          </div>
+          <button type="button" class="btn-primary" id="btn-adicionar-stronghold">💾 Adicionar ao meu atlas</button>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="btn-cancelar-stronghold">Fechar</button>
+          <button type="submit" class="btn-primary" id="btn-calcular-stronghold">Calcular Fortaleza</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- Modal Criar Novo Mundo -->
+  <dialog id="novo-mundo-modal" class="modal-overlay" aria-labelledby="mundo-title" aria-describedby="mundo-desc">
+    <div class="modal-card">
+      <div class="card-header">
+        <h2 id="mundo-title">🌍 Novo Mundo / Save</h2>
+        <p id="mundo-desc">Crie um grupo de coordenadas separado para outro mundo ou servidor.</p>
+      </div>
+      <form id="form-novo-mundo" novalidate>
+        <p id="mundo-feedback" class="feedback feedback-error" role="alert" hidden></p>
+        <div class="form-group">
+          <label for="nome-novo-mundo">Nome do Mundo</label>
+          <input type="text" id="nome-novo-mundo" maxlength="40" placeholder="Ex: Hardcore 1.21, Servidor Amigos" required autocomplete="off">
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="btn-cancelar-mundo">Cancelar</button>
+          <button type="submit" class="btn-primary" id="btn-salvar-mundo">Criar Mundo</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- Modal Mods de Minimapa (Xaero & JourneyMap) -->
+  <dialog id="mods-modal" class="modal-overlay" aria-labelledby="mods-title" aria-describedby="mods-desc">
+    <div class="modal-card">
+      <div class="card-header">
+        <h2 id="mods-title">📦 Exportar / Importar com Mods</h2>
+        <p id="mods-desc">Transfira seus pontos entre o minecoord e os mods mais populares de Minecraft.</p>
+      </div>
+      <div class="mods-options">
+        <div class="mod-card">
+          <strong>Xaero's Minimap</strong>
+          <p>Exporta waypoints no formato <code>.txt</code> compatível com a pasta de waypoints do mod.</p>
+          <button type="button" class="btn-secondary btn-sm" id="btn-export-xaero">Baixar waypoints (Xaero)</button>
+        </div>
+        <div class="mod-card">
+          <strong>JourneyMap</strong>
+          <p>Exporta arquivo JSON de waypoints compatível com a pasta do JourneyMap.</p>
+          <button type="button" class="btn-secondary btn-sm" id="btn-export-journeymap">Baixar waypoints (JourneyMap)</button>
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" id="btn-fechar-mods">Fechar</button>
+      </div>
+    </div>
+  </dialog>
+
   <!-- JavaScript Externo -->
+  <script src="audio.js"></script>
+  <script src="tools.js"></script>
+  <script src="radar.js"></script>
   <script src="storage.js"></script>
   <script src="script.js"></script>
 </body>

@@ -7,24 +7,76 @@ document.addEventListener('DOMContentLoaded', () => {
   const editModal = $('edit-modal');
   const deleteModal = $('delete-modal');
   const f3cModal = $('f3c-modal');
+  const strongholdModal = $('stronghold-modal');
+  const novoMundoModal = $('novo-mundo-modal');
+  const modsModal = $('mods-modal');
   const feedback = $('feedback');
   const atualizar = $('btn-atualizar');
   const resumo = $('list-summary');
   const tabButtons = document.querySelectorAll('.tab-btn');
+
+  // Constantes temáticas de Minecraft
   const EMOJIS = { Base: '🏠', Farm: '🌾', Portal: '🚪', Vila: '🏡', Mina: '⛏️', Outros: '📍' };
   const DIMENSOES = { Overworld: '🌲', Nether: '🔥', End: '🌌', 'The Sift': '🌀' };
   const slugDimensao = dim => dim.toLowerCase().replace(/\s+/g, '-');
+
+  // Estado geral da aplicação
   let locaisCache = [];
   let dimensaoFiltro = 'Todos';
+  let mundoFiltro = 'Todos';
+  let mundosCustomizados = [];
   let paginaAtual = 1;
   let salvando = false;
-  let carregamento;
+  let carregamento = null;
   let carregou = false;
-  let excluirPendente;
-  let ultimoFoco;
+  let excluirPendente = null;
+  let ultimoFoco = null;
+  let f3cDestino = 'form'; // 'form' ou 'player'
+  let posicaoJogador = null; // { x, z }
+  let radarInstancia = null;
+  let strongholdPendente = null;
+
+  // Carrega mundos adicionais salvos localmente
+  try {
+    const mundosSalvos = localStorage.getItem('minecoord.mundos.v1');
+    if (mundosSalvos) mundosCustomizados = JSON.parse(mundosSalvos);
+  } catch {}
+
+  // Inicializa o Radar Canvas se disponível
+  try {
+    if (window.MinecoordRadar && $('radar-canvas')) {
+      radarInstancia = window.MinecoordRadar.criarRadar('radar-canvas');
+    }
+  } catch (err) {
+    console.warn('Não foi possível inicializar o radar:', err);
+  }
+
+  // Configuração do Áudio (Web Audio API)
+  function sincronizarBotaoAudio() {
+    const btn = $('btn-audio-toggle');
+    const icon = $('audio-status-icon');
+    const text = $('audio-status-text');
+    if (!btn || !window.MinecoordAudio) return;
+    const ativo = window.MinecoordAudio.isAtivo();
+    btn.setAttribute('aria-pressed', String(ativo));
+    if (icon) icon.textContent = ativo ? '🔊' : '🔇';
+    if (text) text.textContent = ativo ? 'Sons: Ativados' : 'Sons: Mudos';
+  }
+  sincronizarBotaoAudio();
+
+  $('btn-audio-toggle')?.addEventListener('click', () => {
+    if (!window.MinecoordAudio) return;
+    const ativo = window.MinecoordAudio.toggle();
+    sincronizarBotaoAudio();
+    avisar(ativo ? 'Efeitos sonoros ativados.' : 'Efeitos sonoros desativados.');
+  });
+
+  function tocarSom(tipo) {
+    if (window.MinecoordAudio) window.MinecoordAudio.play(tipo);
+  }
 
   function avisar(mensagem, erro = false) {
-    if (erro && editModal.open) {
+    if (erro && editModal?.open) {
       $('edit-feedback').textContent = mensagem;
       $('edit-feedback').hidden = false;
       return;
@@ -36,7 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function requisitar(url, options = {}) {
-    if (MinecoordStorage.local) return MinecoordStorage.request(url, options);
+    if (window.MinecoordStorage?.local) return window.MinecoordStorage.request(url, options);
     let response;
     try {
       response = await fetch(url, { cache: 'no-store', ...options });
@@ -57,6 +109,47 @@ document.addEventListener('DOMContentLoaded', () => {
     body: body === undefined ? undefined : JSON.stringify(body)
   });
 
+  // Atualização de listas de mundos nos selects
+  function atualizarListasDeMundos() {
+    const mundosDosPontos = locaisCache.map(p => p.mundo || 'Principal').filter(Boolean);
+    const conjuntoMundos = new Set(['Principal', ...mundosCustomizados, ...mundosDosPontos]);
+    const listaOrdenada = Array.from(conjuntoMundos).sort((a, b) => {
+      if (a === 'Principal') return -1;
+      if (b === 'Principal') return 1;
+      return a.localeCompare(b, 'pt-BR');
+    });
+
+    // Seletor principal do cabeçalho
+    const seletorMundo = $('seletor-mundo');
+    if (seletorMundo) {
+      const valorAtual = seletorMundo.value || mundoFiltro;
+      seletorMundo.innerHTML = '<option value="Todos">🌍 Todos os Mundos</option>';
+      listaOrdenada.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m;
+        opt.textContent = `📁 ${m}`;
+        seletorMundo.appendChild(opt);
+      });
+      seletorMundo.value = conjuntoMundos.has(valorAtual) || valorAtual === 'Todos' ? valorAtual : 'Todos';
+      mundoFiltro = seletorMundo.value;
+    }
+
+    // Selects nos formulários de cadastro e edição
+    ['mundo', 'edit-mundo'].forEach(selectId => {
+      const select = $(selectId);
+      if (!select) return;
+      const valorAtual = select.value || 'Principal';
+      select.innerHTML = '';
+      listaOrdenada.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m;
+        opt.textContent = m;
+        select.appendChild(opt);
+      });
+      select.value = conjuntoMundos.has(valorAtual) ? valorAtual : 'Principal';
+    });
+  }
+
   async function carregarLocais() {
     carregamento?.abort();
     const controller = new AbortController();
@@ -71,6 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (controller.signal.aborted) return;
       locaisCache = locais;
       carregou = true;
+      atualizarListasDeMundos();
       filtrarERenderizarLocais();
     } catch (error) {
       if (error.name === 'AbortError' && controller.signal.reason !== 'timeout') return;
@@ -110,6 +204,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (!match) {
+      const regexXZ = /X[:=]\s*([+-]?\d+(?:\.\d+)?).*?Z[:=]\s*([+-]?\d+(?:\.\d+)?)/i;
+      match = texto.match(regexXZ);
+      if (match) {
+        const x = Math.round(Number(match[1]) * 10) / 10;
+        const z = Math.round(Number(match[2]) * 10) / 10;
+        if (Number.isFinite(x) && Number.isFinite(z)) {
+          return { x, y: 64, z, dimensao };
+        }
+      }
+    }
+
+    if (!match) {
       const regexRaw = /^[^0-9+-]*([+-]?\d+(?:\.\d+)?)[,\s]+([+-]?\d+(?:\.\d+)?)[,\s]+([+-]?\d+(?:\.\d+)?)/;
       match = texto.match(regexRaw);
     }
@@ -122,17 +228,28 @@ document.addEventListener('DOMContentLoaded', () => {
     return { x, y, z, dimensao };
   }
 
-  function aplicarMinecraftF3C(texto) {
+  function aplicarMinecraftF3C(texto, destino = 'form') {
     const parseado = parsearComandoMinecraft(texto);
     if (!parseado) {
       throw new Error('Não foi possível identificar coordenadas no texto. Copie com F3+C no jogo ou informe X Y Z.');
     }
+
+    if (destino === 'player') {
+      $('player-x').value = parseado.x;
+      $('player-z').value = parseado.z;
+      atualizarPosicaoJogador();
+      avisar(`Sua posição atual foi definida: X: ${parseado.x}, Z: ${parseado.z}. Distâncias calculadas!`);
+      tocarSom('click');
+      return;
+    }
+
     $('coord-x').value = parseado.x;
     $('coord-y').value = parseado.y;
     $('coord-z').value = parseado.z;
     if (parseado.dimensao) $('dimensao').value = parseado.dimensao;
     const dimTexto = parseado.dimensao ? ` Dimensão: ${parseado.dimensao},` : '';
     avisar(`Coordenadas preenchidas do Minecraft!${dimTexto} X: ${parseado.x}, Y: ${parseado.y}, Z: ${parseado.z}.`);
+    tocarSom('click');
     $('coord-x').focus();
   }
 
@@ -144,6 +261,7 @@ document.addEventListener('DOMContentLoaded', () => {
       botao.classList.add('copied');
       const textSpan = botao.querySelector('.copy-portal-text');
       if (textSpan) textSpan.textContent = 'Copiado!';
+      tocarSom('teleport');
       avisar(`Comando de teletransporte para o portal no ${dimNome} copiado (${comando}).`);
       setTimeout(() => {
         botao.classList.remove('copied');
@@ -158,16 +276,50 @@ document.addEventListener('DOMContentLoaded', () => {
     return String(texto ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
   }
 
+  function atualizarPosicaoJogador() {
+    const valX = $('player-x')?.value?.trim();
+    const valZ = $('player-z')?.value?.trim();
+    const numX = Number(valX);
+    const numZ = Number(valZ);
+
+    if (valX !== '' && valZ !== '' && Number.isFinite(numX) && Number.isFinite(numZ)) {
+      posicaoJogador = { x: numX, z: numZ };
+      $('player-pos-status').textContent = `🧭 Calculando distâncias a partir de X: ${numX}, Z: ${numZ}.`;
+    } else {
+      posicaoJogador = null;
+      $('player-pos-status').textContent = 'Informe X e Z para calcular distância em blocos e direção cardeal.';
+    }
+
+    if (radarInstancia) {
+      radarInstancia.definirJogador(posicaoJogador);
+    }
+    if (carregou) {
+      filtrarERenderizarLocais();
+    }
+  }
+
   function filtrarERenderizarLocais() {
     const termo = normalizar(searchInput.value.trim());
     const filtrados = locaisCache.filter(local =>
-      (!$('filtro-categoria').value || local.categoria === $('filtro-categoria').value)
+      (mundoFiltro === 'Todos' || (local.mundo || 'Principal') === mundoFiltro)
+      && (!$('filtro-categoria').value || local.categoria === $('filtro-categoria').value)
       && (dimensaoFiltro === 'Todos' || local.dimensao === dimensaoFiltro)
-      && [local.nome, local.dimensao, local.categoria, local.notas, local.x, local.y, local.z]
+      && [local.nome, local.dimensao, local.categoria, local.notas, local.mundo, local.x, local.y, local.z]
         .some(valor => normalizar(valor).includes(termo))
     );
+
     const ordem = $('ordenacao').value;
     filtrados.sort((a, b) => {
+      // Prioridade: Favoritos sempre no topo, a menos que selecionada ordenação específica
+      const favA = a.favorito ? 1 : 0;
+      const favB = b.favorito ? 1 : 0;
+      if (favA !== favB) return favB - favA;
+
+      if (ordem === 'distancia' && posicaoJogador) {
+        const distA = Math.hypot(a.x - posicaoJogador.x, a.z - posicaoJogador.z);
+        const distB = Math.hypot(b.x - posicaoJogador.x, b.z - posicaoJogador.z);
+        return distA - distB;
+      }
       if (ordem === 'nome') return a.nome.localeCompare(b.nome, 'pt-BR');
       if (ordem === 'nome-desc') return b.nome.localeCompare(a.nome, 'pt-BR');
       if (ordem === 'dimensao') return a.dimensao.localeCompare(b.dimensao);
@@ -201,7 +353,13 @@ document.addEventListener('DOMContentLoaded', () => {
     $('stat-total').textContent = `${locaisCache.length} ${locaisCache.length === 1 ? 'ponto' : 'pontos'}`;
     for (const dim of Object.keys(DIMENSOES)) $('stat-' + slugDimensao(dim)).textContent = locaisCache.filter(row => row.dimensao === dim).length;
     resumo.textContent = `${totalItens} de ${locaisCache.length} ${locaisCache.length === 1 ? 'ponto' : 'pontos'}${totalItens > limite ? ` (exibindo ${paginados.length})` : ''}`;
+
     renderizarTabela(paginados);
+
+    // Sincroniza pontos com o radar 2D
+    if (radarInstancia) {
+      radarInstancia.atualizar(filtrados, dimensaoFiltro);
+    }
   }
 
   function escaparHTML(texto) {
@@ -214,7 +372,7 @@ document.addEventListener('DOMContentLoaded', () => {
     tabelaCorpo.replaceChildren();
     if (!locais.length) {
       const mensagem = locaisCache.length
-        ? 'Nenhum ponto corresponde à busca ou dimensão selecionada.'
+        ? 'Nenhum ponto corresponde à busca, dimensão ou mundo selecionado.'
         : 'Seu próximo destino começa aqui. Cadastre o primeiro ponto ao lado.';
       tabelaCorpo.innerHTML = `<tr class="empty-row"><td colspan="4">${mensagem}</td></tr>`;
       return;
@@ -223,9 +381,14 @@ document.addEventListener('DOMContentLoaded', () => {
     locais.forEach((local, index) => {
       const tr = document.createElement('tr');
       tr.className = 'fade-in-item';
+      if (local.favorito) tr.classList.add('row-favorito');
       tr.style.animationDelay = `${Math.min(index, 8) * 0.03}s`;
+
       const categoria = local.categoria || 'Outros';
       const dimensaoClasse = Object.hasOwn(DIMENSOES, local.dimensao) ? slugDimensao(local.dimensao) : '';
+      const corPonto = local.cor || '#38bdf8';
+
+      // Calculadora de Portal
       let portal = '';
       if (local.dimensao === 'Overworld' || local.dimensao === 'Nether') {
         const nether = local.dimensao === 'Overworld';
@@ -239,25 +402,100 @@ document.addEventListener('DOMContentLoaded', () => {
           <button type="button" class="btn-copy-portal" title="Copiar /tp para o portal equivalente"><span class="copy-portal-text">Copiar /tp portal</span></button>
         </div>`;
       }
+
+      // Distância a partir da posição do jogador
+      let distanciaHTML = '';
+      if (posicaoJogador && window.MinecoordTools) {
+        const infoDist = window.MinecoordTools.calcularDistanciaEBussola(posicaoJogador, local);
+        if (infoDist) {
+          distanciaHTML = `<span class="badge-distancia" title="Distância em linha reta e direção">${infoDist.seta} <strong>${infoDist.distancia}</strong> blocos (${infoDist.direcao})</span>`;
+        }
+      }
+
       const notasHTML = local.notas
         ? `<div class="local-notas" title="Anotações do local">📝 ${escaparHTML(local.notas)}</div>`
         : '';
+
+      const mundoBadge = local.mundo && local.mundo !== 'Principal'
+        ? `<span class="badge-mundo" title="Mundo / Save">${escaparHTML(local.mundo)}</span>`
+        : '';
+
       tr.innerHTML = `
-        <td><div class="local-nome">${escaparHTML(local.nome)}</div>
+        <td>
+          <div class="nome-row">
+            <button type="button" class="btn-star ${local.favorito ? 'favorito' : ''}" title="${local.favorito ? 'Remover dos favoritos' : 'Fixar nos favoritos'}" aria-label="${local.favorito ? 'Remover ' + local.nome + ' dos favoritos' : 'Fixar ' + local.nome + ' nos favoritos'}">
+              ${local.favorito ? '⭐' : '☆'}
+            </button>
+            <span class="cor-marcador" style="background-color: ${escaparHTML(corPonto)}" title="Cor do marcador: ${escaparHTML(corPonto)}"></span>
+            <div class="local-nome">${escaparHTML(local.nome)}</div>
+            ${mundoBadge}
+          </div>
           <div class="local-categoria">${Object.hasOwn(EMOJIS, categoria) ? EMOJIS[categoria] : '📍'} ${escaparHTML(categoria)}</div>
-          ${notasHTML}</td>
+          ${notasHTML}
+        </td>
         <td data-label="Dimensão"><span class="badge-dimensao ${dimensaoClasse}">${DIMENSOES[local.dimensao] || '📍'} ${escaparHTML(local.dimensao)}</span></td>
-        <td data-label="Coordenadas"><div class="coordinate-details"><div class="coord-badge-container">
-          ${['x', 'y', 'z'].map(axis => `<span class="coord-axis">${axis.toUpperCase()}: <span class="coord-axis-val">${escaparHTML(local[axis])}</span></span>`).join('')}
-        </div>${portal}</div></td>
-        <td class="actions-column"><div class="actions-wrapper">
-          <button type="button" class="btn-copy" title="Copiar comando de teletransporte"><span class="copy-text">Copiar /tp</span><span class="copy-icon" aria-hidden="true">📋</span></button>
-          <button type="button" class="btn-action btn-edit" title="Editar localização">✏️</button>
-          <button type="button" class="btn-action btn-delete" title="Excluir localização">🗑️</button>
-        </div></td>`;
+        <td data-label="Coordenadas">
+          <div class="coordinate-details">
+            <div class="coord-badge-container">
+              ${['x', 'y', 'z'].map(axis => `<span class="coord-axis">${axis.toUpperCase()}: <span class="coord-axis-val">${escaparHTML(local[axis])}</span></span>`).join('')}
+              ${distanciaHTML}
+            </div>
+            ${portal}
+          </div>
+        </td>
+        <td class="actions-column">
+          <div class="actions-wrapper">
+            <button type="button" class="btn-copy" title="Copiar comando de teletransporte"><span class="copy-text">Copiar /tp</span><span class="copy-icon" aria-hidden="true">📋</span></button>
+            <button type="button" class="btn-action btn-share" title="Compartilhar coordenadas formatadas">📤</button>
+            <button type="button" class="btn-action btn-edit" title="Editar localização">✏️</button>
+            <button type="button" class="btn-action btn-delete" title="Excluir localização">🗑️</button>
+          </div>
+        </td>`;
+
+      // Alternar Favorito
+      const starBtn = tr.querySelector('.btn-star');
+      starBtn.addEventListener('click', async () => {
+        if (salvando) return;
+        tocarSom('favorite');
+        const novoStatus = !local.favorito;
+        local.favorito = novoStatus;
+        starBtn.classList.toggle('favorito', novoStatus);
+        starBtn.textContent = novoStatus ? '⭐' : '☆';
+        starBtn.setAttribute('title', novoStatus ? 'Remover dos favoritos' : 'Fixar nos favoritos');
+        try {
+          await enviar(`/api/locais/${encodeURIComponent(local.id)}`, 'PUT', { ...local, favorito: novoStatus });
+          avisar(`“${local.nome}” ${novoStatus ? 'fixado nos favoritos' : 'removido dos favoritos'}.`);
+          filtrarERenderizarLocais();
+        } catch (err) {
+          avisar(err.message, true);
+        }
+      });
+
+      // Copiar Teletransporte
       const copiar = tr.querySelector('.btn-copy');
       copiar.setAttribute('aria-label', `Copiar /tp para ${local.nome}`);
       copiar.addEventListener('click', () => copiarComando(copiar, local));
+
+      // Compartilhar
+      const shareBtn = tr.querySelector('.btn-share');
+      shareBtn.setAttribute('aria-label', `Compartilhar ${local.nome}`);
+      shareBtn.addEventListener('click', async () => {
+        if (!window.MinecoordTools) return;
+        const texto = window.MinecoordTools.formatarCompartilhamento(local);
+        try {
+          if (navigator.clipboard?.writeText) {
+            await navigator.clipboard.writeText(texto);
+            tocarSom('teleport');
+            avisar(`Coordenadas de “${local.nome}” copiadas para compartilhar!`);
+          } else {
+            prompt('Copie as coordenadas formatadas:', texto);
+          }
+        } catch {
+          prompt('Copie as coordenadas formatadas:', texto);
+        }
+      });
+
+      // Copiar Portal
       const copiarPortal = tr.querySelector('.btn-copy-portal');
       if (copiarPortal) {
         const nether = local.dimensao === 'Overworld';
@@ -266,10 +504,14 @@ document.addEventListener('DOMContentLoaded', () => {
         copiarPortal.setAttribute('aria-label', `Copiar /tp portal para ${local.nome}`);
         copiarPortal.addEventListener('click', () => copiarComandoPortal(copiarPortal, px, pz, nether ? 'Nether' : 'Overworld'));
       }
+
+      // Editar
       const editar = tr.querySelector('.btn-edit');
       editar.setAttribute('aria-label', `Editar ${local.nome}`);
       editar.disabled = salvando;
       editar.addEventListener('click', () => abrirEdicao(local, editar));
+
+      // Excluir
       const excluir = tr.querySelector('.btn-delete');
       excluir.setAttribute('aria-label', `Excluir ${local.nome}`);
       excluir.disabled = salvando;
@@ -281,6 +523,7 @@ document.addEventListener('DOMContentLoaded', () => {
         deleteModal.showModal();
         $('btn-cancelar-exclusao').focus();
       });
+
       fragment.appendChild(tr);
     });
     tabelaCorpo.appendChild(fragment);
@@ -306,8 +549,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (mensagem) mensagem.style.display = 'block';
       valido = false;
     };
+
     const nome = campo('nome').value.trim();
     if (!nome || nome.length > 120) invalidar([campo('nome')], campo('error-nome'));
+
     const coordenadas = ['x', 'y', 'z'].map(axis => campo('coord-' + axis));
     const numeros = coordenadas.map(input => Number(input.value));
     const invalidos = coordenadas.filter((input, index) => {
@@ -315,17 +560,30 @@ document.addEventListener('DOMContentLoaded', () => {
       return !input.value.trim() || !Number.isFinite(numeros[index]) || numeros[index] < limite[0] || numeros[index] > limite[1];
     });
     if (invalidos.length) invalidar(invalidos, campo('error-coords'));
+
     if (!Object.hasOwn(DIMENSOES, campo('dimensao').value)) invalidar([campo('dimensao')], campo('error-dimensao'));
     if (!Object.hasOwn(EMOJIS, campo('categoria').value)) invalidar([campo('categoria')], campo('error-categoria'));
+
     if (!valido) {
       formulario.querySelector('.invalid')?.focus();
       return null;
     }
+
     const notas = campo('notas')?.value?.trim() || '';
+    const mundo = campo('mundo')?.value?.trim() || 'Principal';
+    const cor = campo('cor')?.value?.trim() || '#38bdf8';
+    const favorito = Boolean(campo('favorito')?.checked);
+
     return {
-      nome, x: numeros[0], y: numeros[1], z: numeros[2],
+      nome,
+      x: numeros[0],
+      y: numeros[1],
+      z: numeros[2],
       dimensao: campo('dimensao').value,
       categoria: campo('categoria').value,
+      mundo,
+      cor,
+      favorito,
       notas
     };
   }
@@ -336,7 +594,7 @@ document.addEventListener('DOMContentLoaded', () => {
       carregamento?.abort();
       tabelaCorpo.setAttribute('aria-busy', 'false');
     }
-    document.querySelectorAll('form input, form select, form button, .btn-edit, .btn-delete, #btn-confirmar-exclusao, #btn-cancelar-exclusao')
+    document.querySelectorAll('form input, form select, form button, .btn-edit, .btn-delete, .btn-star, #btn-confirmar-exclusao, #btn-cancelar-exclusao')
       .forEach(element => { element.disabled = ativo; });
     atualizar.disabled = ativo;
     if (formulario) {
@@ -363,13 +621,14 @@ document.addEventListener('DOMContentLoaded', () => {
         else locaisCache.push(salvo);
         formulario.reset();
         if (prefixo) editModal.close();
+        tocarSom('save');
         avisar(`“${salvo.nome}” ${id ? 'atualizado' : 'cadastrado'} com sucesso.`);
       } catch (error) {
         avisar(error.message, true);
       } finally {
         ocupado(false, formulario);
+        atualizarListasDeMundos();
         if (carregou) filtrarERenderizarLocais();
-        // Reconciliar com o servidor também após resposta perdida ou conflito.
         await carregarLocais();
       }
     });
@@ -383,12 +642,17 @@ document.addEventListener('DOMContentLoaded', () => {
     $('edit-id').value = local.id;
     for (const key of ['nome', 'dimensao', 'categoria']) $('edit-' + key).value = local[key] || (key === 'categoria' ? 'Outros' : '');
     for (const axis of ['x', 'y', 'z']) $('edit-coord-' + axis).value = local[axis];
+    $('edit-mundo').value = local.mundo || 'Principal';
+    $('edit-cor').value = local.cor || '#38bdf8';
     $('edit-notas').value = local.notas || '';
+    $('edit-favorito').checked = Boolean(local.favorito);
     editModal.showModal();
     $('edit-nome').focus();
   }
 
-  for (const modal of [editModal, deleteModal, f3cModal]) {
+  // Acessibilidade e fechamento dos modais
+  const todosModais = [editModal, deleteModal, f3cModal, strongholdModal, novoMundoModal, modsModal].filter(Boolean);
+  todosModais.forEach(modal => {
     modal.addEventListener('keydown', event => {
       if (event.key !== 'Tab') return;
       const campos = [...modal.querySelectorAll('input:not([type="hidden"]):not(:disabled), select:not(:disabled), button:not(:disabled)')];
@@ -411,18 +675,25 @@ document.addEventListener('DOMContentLoaded', () => {
       if (ultimoFoco?.isConnected) ultimoFoco.focus();
       else atualizar.focus();
     });
-  }
-  $('btn-cancelar-edicao').addEventListener('click', () => { if (!salvando) editModal.close(); });
-  $('btn-cancelar-exclusao').addEventListener('click', () => { if (!salvando) deleteModal.close(); });
-  $('btn-cancelar-f3c').addEventListener('click', () => { f3cModal.close(); });
+  });
 
-  $('btn-colar-f3c').addEventListener('click', async () => {
+  // Botões de cancelamento de modais
+  $('btn-cancelar-edicao')?.addEventListener('click', () => { if (!salvando) editModal.close(); });
+  $('btn-cancelar-exclusao')?.addEventListener('click', () => { if (!salvando) deleteModal.close(); });
+  $('btn-cancelar-f3c')?.addEventListener('click', () => { f3cModal.close(); });
+  $('btn-cancelar-stronghold')?.addEventListener('click', () => { strongholdModal.close(); });
+  $('btn-cancelar-mundo')?.addEventListener('click', () => { novoMundoModal.close(); });
+  $('btn-fechar-mods')?.addEventListener('click', () => { modsModal.close(); });
+
+  // Botão F3+C no Formulário Principal
+  $('btn-colar-f3c')?.addEventListener('click', async () => {
+    f3cDestino = 'form';
     ultimoFoco = $('btn-colar-f3c');
     try {
       if (navigator.clipboard?.readText) {
         const texto = await navigator.clipboard.readText();
         if (texto && texto.trim()) {
-          aplicarMinecraftF3C(texto);
+          aplicarMinecraftF3C(texto, 'form');
           return;
         }
       }
@@ -435,18 +706,51 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  $('form-f3c').addEventListener('submit', event => {
+  // Botão F3+C na Barra do Jogador
+  $('btn-player-f3c')?.addEventListener('click', async () => {
+    f3cDestino = 'player';
+    ultimoFoco = $('btn-player-f3c');
+    try {
+      if (navigator.clipboard?.readText) {
+        const texto = await navigator.clipboard.readText();
+        if (texto && texto.trim()) {
+          aplicarMinecraftF3C(texto, 'player');
+          return;
+        }
+      }
+      throw new Error('Clipboard indisponível');
+    } catch {
+      $('f3c-feedback').hidden = true;
+      $('f3c-texto').value = '';
+      f3cModal.showModal();
+      $('f3c-texto').focus();
+    }
+  });
+
+  // Inputs da posição do jogador
+  $('player-x')?.addEventListener('input', atualizarPosicaoJogador);
+  $('player-z')?.addEventListener('input', atualizarPosicaoJogador);
+  $('btn-player-limpar')?.addEventListener('click', () => {
+    $('player-x').value = '';
+    $('player-z').value = '';
+    atualizarPosicaoJogador();
+    avisar('Posição atual limpa.');
+  });
+
+  $('form-f3c')?.addEventListener('submit', event => {
     event.preventDefault();
     const texto = $('f3c-texto').value;
     try {
-      aplicarMinecraftF3C(texto);
+      aplicarMinecraftF3C(texto, f3cDestino);
       f3cModal.close();
     } catch (err) {
       $('f3c-feedback').textContent = err.message;
       $('f3c-feedback').hidden = false;
     }
   });
-  $('btn-confirmar-exclusao').addEventListener('click', async () => {
+
+  // Confirmar Exclusão
+  $('btn-confirmar-exclusao')?.addEventListener('click', async () => {
     if (salvando || !excluirPendente) return;
     const local = excluirPendente;
     ocupado(true);
@@ -457,6 +761,7 @@ document.addEventListener('DOMContentLoaded', () => {
       locaisCache = locaisCache.filter(item => item.id !== local.id);
       deleteModal.close();
       excluirPendente = null;
+      tocarSom('delete');
       avisar(`“${local.nome}” excluído com sucesso.`);
     } catch (error) {
       deleteModal.close();
@@ -464,6 +769,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } finally {
       ocupado(false);
       botao.textContent = 'Excluir localização';
+      atualizarListasDeMundos();
       if (carregou) filtrarERenderizarLocais();
       await carregarLocais();
     }
@@ -474,6 +780,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       if (!navigator.clipboard?.writeText) throw new Error('Clipboard indisponível');
       await navigator.clipboard.writeText(comando);
+      tocarSom('teleport');
       botao.classList.add('copied');
       botao.querySelector('.copy-text').textContent = 'Copiado!';
       botao.setAttribute('aria-label', `Copiado! Comando para ${local.nome}`);
@@ -488,6 +795,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // Abas de Dimensão
   tabButtons.forEach(button => button.addEventListener('click', () => {
     tabButtons.forEach(tab => {
       tab.classList.toggle('active', tab === button);
@@ -495,50 +803,222 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     dimensaoFiltro = button.dataset.filter;
     paginaAtual = 1;
+    tocarSom('click');
     if (carregou) filtrarERenderizarLocais();
   }));
+
+  // Seletor de Mundo
+  $('seletor-mundo')?.addEventListener('change', e => {
+    mundoFiltro = e.target.value;
+    paginaAtual = 1;
+    tocarSom('click');
+    if ($('mundo') && mundoFiltro !== 'Todos') {
+      $('mundo').value = mundoFiltro;
+    }
+    if (carregou) filtrarERenderizarLocais();
+  });
+
+  // Modal Novo Mundo
+  $('btn-novo-mundo')?.addEventListener('click', () => {
+    ultimoFoco = $('btn-novo-mundo');
+    $('nome-novo-mundo').value = '';
+    $('mundo-feedback').hidden = true;
+    novoMundoModal.showModal();
+    $('nome-novo-mundo').focus();
+  });
+
+  $('form-novo-mundo')?.addEventListener('submit', e => {
+    e.preventDefault();
+    const nome = $('nome-novo-mundo').value.trim();
+    if (!nome) return;
+    if (!mundosCustomizados.includes(nome)) {
+      mundosCustomizados.push(nome);
+      try {
+        localStorage.setItem('minecoord.mundos.v1', JSON.stringify(mundosCustomizados));
+      } catch {}
+    }
+    mundoFiltro = nome;
+    atualizarListasDeMundos();
+    $('seletor-mundo').value = nome;
+    if ($('mundo')) $('mundo').value = nome;
+    novoMundoModal.close();
+    tocarSom('save');
+    avisar(`Mundo “${nome}” criado e selecionado.`);
+    if (carregou) filtrarERenderizarLocais();
+  });
+
+  // Modal Stronghold
+  $('btn-abrir-stronghold')?.addEventListener('click', () => {
+    ultimoFoco = $('btn-abrir-stronghold');
+    $('stronghold-feedback').hidden = true;
+    $('stronghold-resultado').hidden = true;
+    strongholdPendente = null;
+    strongholdModal.showModal();
+    $('st-x1').focus();
+  });
+
+  $('form-stronghold')?.addEventListener('submit', e => {
+    e.preventDefault();
+    if (!window.MinecoordTools) return;
+    try {
+      const p1 = { x: $('st-x1').value, z: $('st-z1').value, angulo: $('st-ang1').value };
+      const p2 = { x: $('st-x2').value, z: $('st-z2').value, angulo: $('st-ang2').value };
+      const res = window.MinecoordTools.triangularStronghold(p1, p2);
+      strongholdPendente = res;
+      $('st-resultado-coords').textContent = `X: ${res.x}, Z: ${res.z} (Y estimado: ~32)`;
+      $('stronghold-resultado').hidden = false;
+      $('stronghold-feedback').hidden = true;
+      tocarSom('save');
+    } catch (err) {
+      $('stronghold-feedback').textContent = err.message;
+      $('stronghold-feedback').hidden = false;
+      $('stronghold-resultado').hidden = true;
+    }
+  });
+
+  $('btn-adicionar-stronghold')?.addEventListener('click', () => {
+    if (!strongholdPendente) return;
+    $('nome').value = 'Fortaleza do End (Stronghold)';
+    $('coord-x').value = strongholdPendente.x;
+    $('coord-y').value = strongholdPendente.y;
+    $('coord-z').value = strongholdPendente.z;
+    $('dimensao').value = 'Overworld';
+    $('categoria').value = 'Outros';
+    $('cor').value = '#a855f7';
+    $('favorito').checked = true;
+    strongholdModal.close();
+    tocarSom('teleport');
+    avisar('Coordenadas da Fortaleza inseridas no formulário! Clique em "Salvar Localização" para confirmar.');
+    $('btn-submit').focus();
+  });
+
+  // Alternador de Visualização: Tabela vs Radar
+  $('btn-view-table')?.addEventListener('click', () => {
+    $('btn-view-table').classList.add('active');
+    $('btn-view-table').setAttribute('aria-pressed', 'true');
+    $('btn-view-radar').classList.remove('active');
+    $('btn-view-radar').setAttribute('aria-pressed', 'false');
+    document.querySelector('.table-container').hidden = false;
+    if ($('pagination-container') && locaisCache.length > 25) $('pagination-container').hidden = false;
+    $('radar-container').hidden = true;
+    tocarSom('click');
+  });
+
+  $('btn-view-radar')?.addEventListener('click', () => {
+    $('btn-view-radar').classList.add('active');
+    $('btn-view-radar').setAttribute('aria-pressed', 'true');
+    $('btn-view-table').classList.remove('active');
+    $('btn-view-table').setAttribute('aria-pressed', 'false');
+    document.querySelector('.table-container').hidden = true;
+    if ($('pagination-container')) $('pagination-container').hidden = true;
+    $('radar-container').hidden = false;
+    tocarSom('click');
+    if (radarInstancia) {
+      radarInstancia.redimensionar();
+      radarInstancia.centralizar();
+    }
+  });
+
+  // Controles do Radar
+  $('btn-radar-zoom-in')?.addEventListener('click', () => radarInstancia?.zoomIn());
+  $('btn-radar-zoom-out')?.addEventListener('click', () => radarInstancia?.zoomOut());
+  $('btn-radar-center')?.addEventListener('click', () => radarInstancia?.centralizar());
+
+  // Modal Mods (Xaero & JourneyMap)
+  $('btn-abrir-mods')?.addEventListener('click', () => {
+    ultimoFoco = $('btn-abrir-mods');
+    modsModal.showModal();
+  });
+
+  $('btn-export-xaero')?.addEventListener('click', () => {
+    if (!window.MinecoordTools) return;
+    const txt = window.MinecoordTools.exportarFormatoXaero(locaisCache);
+    const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `waypoints-xaero-${new Date().toISOString().slice(0, 10)}.txt`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    tocarSom('chest');
+    avisar('Waypoints exportados no formato do Xaero’s Minimap!');
+  });
+
+  $('btn-export-journeymap')?.addEventListener('click', () => {
+    if (!window.MinecoordTools) return;
+    const json = window.MinecoordTools.exportarFormatoJourneyMap(locaisCache);
+    const blob = new Blob([json], { type: 'application/json;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `waypoints-journeymap-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    tocarSom('chest');
+    avisar('Waypoints exportados no formato do JourneyMap!');
+  });
+
+  // Busca e Ordenação
   searchInput.addEventListener('input', () => {
     paginaAtual = 1;
     if (carregou) filtrarERenderizarLocais();
   });
+
   atualizar.addEventListener('click', () => {
     feedback.hidden = true;
+    tocarSom('click');
     carregarLocais();
   });
+
   $('btn-page-prev').addEventListener('click', () => {
     if (paginaAtual > 1) {
       paginaAtual--;
+      tocarSom('click');
       filtrarERenderizarLocais();
     }
   });
+
   $('btn-page-next').addEventListener('click', () => {
     paginaAtual++;
+    tocarSom('click');
     filtrarERenderizarLocais();
   });
+
   $('select-page-size').addEventListener('change', () => {
     paginaAtual = 1;
     filtrarERenderizarLocais();
   });
-  const local = MinecoordStorage.local;
+
+  const local = window.MinecoordStorage?.local;
   $('storage-mode').textContent = local ? 'Salvo neste navegador' : 'Salvo no servidor';
   $('storage-description').textContent = local
     ? 'Os pontos ficam neste navegador e neste caminho. Exporte um backup antes de mover a pasta ou limpar os dados.'
     : 'Seus pontos ficam na pasta de dados do servidor. Exporte um backup para levar para outro dispositivo.';
+
   for (const id of ['filtro-categoria', 'ordenacao']) $(id).addEventListener('change', () => {
     paginaAtual = 1;
     filtrarERenderizarLocais();
   });
+
+  // Exportar Backup Padrão
   $('btn-exportar').addEventListener('click', async () => {
     try {
       const rows = await requisitar('/api/locais');
-      const blob = new Blob([JSON.stringify({ formato: 'minecoord', versao: 1, exportadoEm: new Date().toISOString(), locais: rows }, null, 2)], { type: 'application/json' });
+      const blob = new Blob([JSON.stringify({ formato: 'minecoord', versao: 2, exportadoEm: new Date().toISOString(), locais: rows }, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const anchor = document.createElement('a');
-      anchor.href = url; anchor.download = `minecoord-${new Date().toISOString().slice(0, 10)}.json`;
-      anchor.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+      anchor.href = url;
+      anchor.download = `minecoord-${new Date().toISOString().slice(0, 10)}.json`;
+      anchor.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      tocarSom('chest');
       avisar('Backup preparado. Confira o arquivo na pasta de downloads.');
-    } catch (error) { avisar(error.message, true); }
+    } catch (error) {
+      avisar(error.message, true);
+    }
   });
+
+  // Importar Backup ou Waypoints de Mods
   $('btn-importar').addEventListener('click', () => $('arquivo-importar').click());
   $('arquivo-importar').addEventListener('change', async event => {
     const file = event.target.files[0];
@@ -547,14 +1027,38 @@ document.addEventListener('DOMContentLoaded', () => {
     $('btn-importar').disabled = true;
     try {
       if (file.size > 5 * 1024 * 1024) throw new Error('O backup deve ter no máximo 5 MB.');
-      const content = JSON.parse(await file.text());
-      const rows = MinecoordStorage.validar(Array.isArray(content) ? content : content.locais);
+      const text = await file.text();
+
+      // Verifica se é arquivo de mod (Xaero ou JourneyMap)
+      if (window.MinecoordTools) {
+        const modWaypoints = window.MinecoordTools.importarWaypointsMods(text);
+        if (modWaypoints && modWaypoints.length > 0) {
+          const rowsValidadas = window.MinecoordStorage.validar(modWaypoints);
+          const result = await enviar('/api/locais/importar', 'POST', rowsValidadas);
+          tocarSom('chest');
+          avisar(`${result.importados} waypoints de mod importados com sucesso!`);
+          return;
+        }
+      }
+
+      // Importação JSON padrão do minecoord
+      const content = JSON.parse(text);
+      const rows = window.MinecoordStorage.validar(Array.isArray(content) ? content : content.locais);
       const result = await enviar('/api/locais/importar', 'POST', rows);
+      tocarSom('chest');
       avisar(`${result.importados} pontos importados. Os pontos existentes foram preservados.`);
-    } catch (error) { avisar(error instanceof SyntaxError ? 'Arquivo JSON inválido. Nenhum ponto foi importado.' : error.message, true); }
-    finally { ocupado(false); $('btn-importar').disabled = false; event.target.value = ''; await carregarLocais(); }
+    } catch (error) {
+      avisar(error instanceof SyntaxError ? 'Arquivo JSON inválido. Nenhum ponto foi importado.' : error.message, true);
+    } finally {
+      ocupado(false);
+      $('btn-importar').disabled = false;
+      event.target.value = '';
+      await carregarLocais();
+    }
   });
+
   window.addEventListener('storage', event => { if (local && event.key === 'minecoord.locais.v1') carregarLocais(); });
+
   registrarFormulario(form);
   registrarFormulario(formEditar, 'edit-');
   carregarLocais();

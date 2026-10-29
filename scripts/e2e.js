@@ -140,6 +140,38 @@ async function main() {
       console.log('Acessibilidade automatizada: sem violações no diálogo em celular.');
     }
     await page.keyboard.press('Escape');
+    // Testa alternância de som
+    await page.locator('#btn-audio-toggle').click();
+    assert.equal(await page.locator('#btn-audio-toggle').getAttribute('aria-pressed'), 'false');
+    await page.locator('#btn-audio-toggle').click();
+    assert.equal(await page.locator('#btn-audio-toggle').getAttribute('aria-pressed'), 'true');
+
+    // Testa cálculo de distância a partir da posição do jogador
+    await page.locator('#player-x').fill('-80');
+    await page.locator('#player-z').fill('60');
+    await page.getByText('100 blocos (Sul)', { exact: false }).waitFor();
+
+    // Testa alternador de visualização para o Radar 2D
+    await page.locator('#btn-view-radar').click();
+    assert.equal(await page.locator('#radar-container').isVisible(), true);
+    assert.equal(await page.locator('.table-container').isVisible(), false);
+    await page.locator('#btn-view-table').click();
+    assert.equal(await page.locator('.table-container').isVisible(), true);
+
+    // Testa triangulador de Stronghold
+    await page.locator('#btn-abrir-stronghold').click();
+    await page.locator('#st-x1').fill('0');
+    await page.locator('#st-z1').fill('0');
+    await page.locator('#st-ang1').fill('45');
+    await page.locator('#st-x2').fill('200');
+    await page.locator('#st-z2').fill('0');
+    await page.locator('#st-ang2').fill('0');
+    await page.locator('#form-stronghold').evaluate(form => form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
+    await page.locator('#stronghold-resultado').waitFor();
+    await page.locator('#btn-adicionar-stronghold').click();
+    assert.equal(await page.locator('#nome').inputValue(), 'Fortaleza do End (Stronghold)');
+    await page.locator('#form-coordenada').evaluate(form => form.reset());
+
     await page.locator('.btn-delete').click();
     assert.equal(await page.locator('#btn-cancelar-exclusao').evaluate(element => document.activeElement === element), true);
     await page.locator('#btn-cancelar-exclusao').click();

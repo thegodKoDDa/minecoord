@@ -40,13 +40,21 @@
     if (row.categoria && !['Base', 'Farm', 'Portal', 'Vila', 'Mina', 'Outros'].includes(row.categoria)) {
       throw new Error('O backup contém um ponto inválido. Nenhum ponto foi importado.');
     }
+    if (row.favorito !== undefined && row.favorito !== null && typeof row.favorito !== 'boolean') {
+      throw new Error('O backup contém um ponto inválido. Nenhum ponto foi importado.');
+    }
     const item = {
       nome: row.nome.trim(), x, y, z,
       dimensao: row.dimensao,
-      categoria: row.categoria || 'Outros'
+      categoria: row.categoria || 'Outros',
+      mundo: typeof row.mundo === 'string' && row.mundo.trim() ? row.mundo.trim().slice(0, 40) : 'Principal',
+      favorito: Boolean(row.favorito)
     };
     if (typeof row.notas === 'string' && row.notas.trim()) {
       item.notas = row.notas.trim().slice(0, 500);
+    }
+    if (typeof row.cor === 'string' && /^#[0-9a-fA-F]{6}$/.test(row.cor.trim())) {
+      item.cor = row.cor.trim().toLowerCase();
     }
     return item;
   }
@@ -101,6 +109,7 @@
           const validated = validarPonto(body);
           const anterior = { ...rows[index] };
           if (body.notas === '' || body.notas === null) delete anterior.notas;
+          if (body.cor === '' || body.cor === null) delete anterior.cor;
           rows[index] = { ...anterior, ...validated, atualizadoEm: new Date().toISOString() };
           gravar(rows); return rows[index];
         }

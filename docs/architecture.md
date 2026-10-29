@@ -40,6 +40,22 @@ O desktop mantém a tabela; celular usa o mesmo conteúdo em blocos. Há foco vi
 
 `POST /api/locais/importar` recebe uma lista, valida todo o lote e adiciona os pontos em uma única transação do repositório. Limite 5 MB e 10.000 pontos, IDs novos. Alturas legadas finitas são aceitas apenas nesse transporte. Endpoints CRUD mantêm contrato. Exportação usa GET existente e JSON versionado no cliente. Importações repetidas são aditivas.
 
+## Atlas 1.5 (Expansão Temática Minecraft)
+
+A versão 1.5 introduz módulos frontend puros e modulares (`audio.js`, `tools.js` e `radar.js`), totalmente independentes de bundlers ou frameworks:
+
+- **Contrato de Dados Estendido**:
+  - `mundo`: texto de até 40 caracteres com o nome do save/mundo (padrão `'Principal'`).
+  - `favorito`: booleano (padrão `false`), promovendo itens marcados ao topo da tabela e destaque visual com estrela ⭐.
+  - `cor`: string hexadecimal de 6 dígitos no formato `^#[0-9a-fA-F]{6}$` com paleta temática de minérios do Minecraft.
+- **Módulo de Áudio (`audio.js`)**: sintetizador via Web Audio API nativa com osciladores e curvas de ganho em tempo real (`click`, `save`, `favorite`, `delete`, `teleport`, `chest`). O estado do áudio é salvo em `minecoord.audio.ativo` no `localStorage` e controlado por botão acessível com `aria-pressed`.
+- **Módulo de Ferramentas (`tools.js`)**:
+  - Triangulação de Stronghold: interseção vetorial 2D no plano X/Z considerando as rotações de ângulo Yaw do Minecraft Java.
+  - Bússola e Proximidade: distância euclidiana ($\sqrt{\Delta X^2 + \Delta Z^2}$) e rotação em 8 octantes cardeais (N, NE, L, SE, S, SO, O, NO).
+  - Interoperabilidade com Mods: conversores de entrada e saída para formatos de waypoints do **Xaero's Minimap** e **JourneyMap**.
+  - Compartilhador: formatação estilizada em Markdown para Discord/chats.
+- **Módulo de Radar 2D (`radar.js`)**: motor cartográfico top-down em Canvas HTML5 de alta resolução com pan, zoom, grade dinâmica do mundo e representação em tempo real do jogador e waypoints com suas cores configuradas.
+
 ## Proteção de acesso
 
 Middleware antes dos estáticos e da API usa autenticação Basic quando AUTH_PASSWORD está definida (mínimo 16 caracteres). AUTH_USER tem padrão minecoord. Comparação usa hashes de tamanho fixo e timingSafeEqual. Acesso fora de loopback sem senha impede inicialização. Credenciais não são persistidas pelo aplicativo. HTTPS deve ser terminado em proxy para uso em rede; Basic não criptografa o transporte.

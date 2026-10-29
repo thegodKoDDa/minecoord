@@ -56,6 +56,7 @@ router.put('/locais/:id', tratar(async (req, res) => {
     if (indice === -1) throw naoEncontrado();
     const anterior = { ...locais[indice] };
     if (req.body.notas === '' || req.body.notas === null) delete anterior.notas;
+    if (req.body.cor === '' || req.body.cor === null) delete anterior.cor;
     locais[indice] = {
       ...anterior, ...validacao.dadosFormatados,
       atualizadoEm: new Date().toISOString()
