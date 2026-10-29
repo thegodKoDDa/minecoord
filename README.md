@@ -14,7 +14,6 @@ Seu mundo, bem localizado. Um atlas de coordenadas para organizar bases, portais
 - **Bússola e Calculadora de Distância:** informe sua posição atual (manualmente ou colando F3+C) para ver a distância euclidiana em blocos, direção cardeal (N, NE, L, SE, S, SO, O, NO) e ordenar por proximidade.
 - **Mini Radar 2D Interativo:** visualização cartográfica no Canvas do navegador com zoom, pan, grade de coordenadas e marcador pulsante do jogador.
 - **Cores Personalizadas:** escolha temas visuais de minérios do Minecraft (Diamante, Esmeralda, Redstone, Ouro, Ametista, The Sift e Ardósia) para identificar seus marcadores.
-- **Efeitos Sonoros Retrô Minecraft:** áudio sintetizado em tempo real via Web Audio API (sem downloads externos de áudio) com **botão de alternância (ativar/desativar persistido)** no cabeçalho.
 - **Triangulador de Stronghold (Olhos do Fim):** calcule a posição X e Z exata da Fortaleza jogando dois Olhos do Fim e inserindo os ângulos Yaw do F3.
 - **Compatibilidade com Mods:** exporte e importe waypoints compatíveis com **Xaero’s Minimap** e **JourneyMap**.
 - **Compartilhamento Rápido:** copie as coordenadas formatadas com emojis e comando `/tp` prontas para enviar no Discord ou chat.

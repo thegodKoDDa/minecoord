@@ -1,40 +1,37 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Minecraft Coordinates Hub · minecoord</title>
-  <meta name="description" content="Salve seus pontos de interesse no Minecraft, filtre por dimensão e encontre as coordenadas equivalentes dos portais.">
-  <meta name="theme-color" content="#0d0e12">
-  <!-- CSS Externo -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>minecoord — Atlas de Coordenadas do Minecraft</title>
+  <meta name="description" content="Organize suas coordenadas de Minecraft com suporte a múltiplos mundos, radar 2D, favoritos, cálculo de portais, bússola e atalho F3+C.">
   <link rel="stylesheet" href="style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🟩</text></svg>">
 </head>
 <body>
-  <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
-
   <div class="app-container">
     <header class="app-header">
-      <div class="logo-row">
-        <div class="logo-container">
-          <span class="cube-icon">🟩</span>
-          <h1>mine<span class="accent-text">coord</span></h1>
-        </div>
-        <div class="header-tools">
-          <div class="world-selector-container">
-            <label for="seletor-mundo" class="sr-only">Filtrar por mundo</label>
-            <select id="seletor-mundo" class="select-mundo" title="Filtrar pontos por mundo">
-              <option value="">🌍 Todos os mundos</option>
-              <option value="Principal" selected>Mundo: Principal</option>
-            </select>
-            <button type="button" class="btn-secondary btn-sm" id="btn-novo-mundo" title="Criar novo mundo">+ Mundo</button>
-          </div>
-          <button type="button" class="btn-secondary btn-sm" id="btn-abrir-stronghold" title="Calcular localização da Stronghold (portal do End)">🧭 Stronghold</button>
-          <button type="button" class="btn-secondary btn-sm btn-audio" id="btn-audio-toggle" title="Ativar ou desativar efeitos sonoros" aria-pressed="true">🔊 Sons</button>
-        </div>
+      <div class="logo-container">
+        <span class="cube-icon" aria-hidden="true">🟩</span>
+        <h1>mine<span class="accent-text">coord</span></h1>
       </div>
       <p class="subtitle">Seu mundo, bem localizado. Bases, descobertas e caminhos para a próxima aventura.</p>
+
+      <div class="world-bar">
+        <div class="world-pill">
+          <span class="world-icon" aria-hidden="true">📁</span>
+          <span class="world-label">Mundo / Save:</span>
+          <label for="seletor-mundo" class="sr-only">Selecionar mundo ativo</label>
+          <select id="seletor-mundo" class="select-mundo-clean" title="Filtrar pontos por mundo">
+            <option value="Todos">🌍 Todos os mundos</option>
+            <option value="Principal" selected>Principal</option>
+          </select>
+          <button type="button" class="btn-novo-mundo-clean" id="btn-novo-mundo" title="Criar um novo mundo ou save">+ Novo Mundo</button>
+        </div>
+      </div>
     </header>
 
+    <!-- Resumo dos Pontos do Atlas -->
     <section class="overview" aria-label="Resumo do mundo">
       <div class="world-stat"><span>Seu atlas</span><strong id="stat-total">0 pontos</strong></div>
       <div class="world-stat"><span>🌲 Overworld</span><strong id="stat-overworld">0</strong></div>
@@ -42,17 +39,25 @@
       <div class="world-stat"><span>🌌 End</span><strong id="stat-end">0</strong></div>
       <div class="world-stat"><span>🌀 The Sift</span><strong id="stat-the-sift">0</strong></div>
     </section>
-    <section class="storage-bar" aria-label="Armazenamento e backups">
-      <div><strong id="storage-mode">Armazenamento</strong><p id="storage-description"></p></div>
+
+    <!-- Barra de Armazenamento, Backups e Ferramentas -->
+    <section class="storage-bar" aria-label="Armazenamento e ferramentas">
+      <div class="storage-info">
+        <strong id="storage-mode">Armazenamento</strong>
+        <p id="storage-description"></p>
+      </div>
       <div class="backup-actions">
         <button type="button" class="btn-secondary" id="btn-exportar">Exportar backup</button>
         <button type="button" class="btn-secondary" id="btn-importar">Importar pontos</button>
-        <button type="button" class="btn-secondary btn-sm" id="btn-abrir-mods" title="Exportar ou importar waypoints de mods de minimapa">📦 Mods</button>
+        <button type="button" class="btn-secondary btn-tool" id="btn-abrir-stronghold" title="Calcular localização da Stronghold">🧭 Triangular Stronghold</button>
+        <button type="button" class="btn-secondary btn-tool" id="btn-abrir-mods" title="Exportar ou importar waypoints de mods">📦 Mods (Minimapas)</button>
         <input type="file" id="arquivo-importar" accept="application/json,.json,.txt" hidden>
       </div>
     </section>
+
     <div id="feedback" class="feedback" role="status" aria-live="polite" aria-atomic="true" hidden></div>
     <noscript><p class="feedback">Ative o JavaScript para consultar e gerenciar seus pontos de interesse.</p></noscript>
+
     <main class="app-content" id="conteudo" tabindex="-1">
       <!-- Seção do Formulário de Cadastro -->
       <section class="card-section form-section">
@@ -91,30 +96,32 @@
           <p class="field-hint">X e Z: ±30.000.000 · Y: -64 a 320</p>
           <span class="error-msg" id="error-coords">Preencha X e Z entre -30.000.000 e 30.000.000, e Y entre -64 e 320.</span>
 
-          <div class="form-group">
-            <label for="dimensao">Dimensão</label>
-            <select id="dimensao" name="dimensao" aria-describedby="error-dimensao" required>
-              <option value="" disabled selected>Selecione a Dimensão</option>
-              <option value="Overworld">🌲 Overworld</option>
-              <option value="Nether">🔥 Nether</option>
-              <option value="End">🌌 End</option>
-              <option value="The Sift">🌀 The Sift</option>
-            </select>
-            <span class="error-msg" id="error-dimensao">Selecione uma dimensão.</span>
-          </div>
+          <div class="form-row-dual">
+            <div class="form-group">
+              <label for="dimensao">Dimensão</label>
+              <select id="dimensao" name="dimensao" aria-describedby="error-dimensao" required>
+                <option value="" disabled selected>Selecione a Dimensão</option>
+                <option value="Overworld">🌲 Overworld</option>
+                <option value="Nether">🔥 Nether</option>
+                <option value="End">🌌 End</option>
+                <option value="The Sift">🌀 The Sift</option>
+              </select>
+              <span class="error-msg" id="error-dimensao">Selecione uma dimensão.</span>
+            </div>
 
-          <div class="form-group">
-            <label for="categoria">Categoria</label>
-            <select id="categoria" name="categoria" aria-describedby="error-categoria" required>
-              <option value="" disabled selected>Selecione a Categoria</option>
-              <option value="Base">🏠 Base</option>
-              <option value="Farm">🌾 Farm</option>
-              <option value="Portal">🚪 Portal</option>
-              <option value="Vila">🏡 Vila</option>
-              <option value="Mina">⛏️ Mina</option>
-              <option value="Outros">📍 Outros</option>
-            </select>
-            <span class="error-msg" id="error-categoria">Selecione uma categoria.</span>
+            <div class="form-group">
+              <label for="categoria">Categoria</label>
+              <select id="categoria" name="categoria" aria-describedby="error-categoria" required>
+                <option value="" disabled selected>Selecione a Categoria</option>
+                <option value="Base">🏠 Base</option>
+                <option value="Farm">🌾 Farm</option>
+                <option value="Portal">🚪 Portal</option>
+                <option value="Vila">🏡 Vila</option>
+                <option value="Mina">⛏️ Mina</option>
+                <option value="Outros">📍 Outros</option>
+              </select>
+              <span class="error-msg" id="error-categoria">Selecione uma categoria.</span>
+            </div>
           </div>
 
           <div class="form-row-dual">
@@ -184,7 +191,7 @@
           <button class="tab-btn" aria-pressed="false" data-filter="The Sift">🌀 The Sift</button>
         </div>
 
-        <!-- Barra de Bússola e Posição do Jogador -->
+        <!-- Barra Integrada de Bússola e Posição Atual -->
         <div class="player-position-bar" id="player-position-bar">
           <div class="player-pos-row">
             <span class="compass-badge">🧭 Minha Posição:</span>
@@ -209,10 +216,13 @@
             <option value="coord-z">Coordenada Z</option>
           </select></label>
         </div>
+
         <div class="list-toolbar">
           <p id="list-summary" class="list-summary" role="status" aria-live="polite">Carregando pontos…</p>
           <button type="button" id="btn-atualizar" class="btn-secondary">Atualizar lista</button>
         </div>
+
+        <!-- Tabela Principal -->
         <div class="table-container" tabindex="0" role="region" aria-label="Tabela de pontos de interesse">
           <table class="coords-table" id="tabela-coordenadas">
             <caption class="sr-only">Locais salvos e coordenadas equivalentes dos portais</caption>
@@ -225,13 +235,13 @@
               </tr>
             </thead>
             <tbody id="tabela-corpo">
-              <!-- As linhas da tabela serão injetadas dinamicamente aqui -->
               <tr class="empty-row">
                 <td colspan="4">Carregando pontos de interesse...</td>
               </tr>
             </tbody>
           </table>
         </div>
+
         <!-- Visualização de Radar 2D Interativo -->
         <div class="radar-container" id="radar-container" hidden>
           <div class="radar-toolbar">
@@ -244,6 +254,7 @@
           </div>
           <canvas id="radar-canvas" class="radar-canvas" height="460"></canvas>
         </div>
+
         <div class="pagination-bar" id="pagination-container" hidden>
           <div class="pagination-nav">
             <button type="button" class="btn-secondary btn-page" id="btn-page-prev" disabled>◀ Anterior</button>
@@ -265,7 +276,7 @@
     </main>
 
     <footer class="app-footer">
-      <p>Minecraft Coordinates Hub &copy; 2026. Feito com ❤️ para aventureiros.</p>
+      <p>Minecraft Coordinates Hub &copy; 2026. Feito para aventureiros.</p>
     </footer>
   </div>
 
@@ -279,7 +290,6 @@
 
       <form id="form-editar" novalidate>
         <p id="edit-feedback" class="feedback feedback-error" role="alert" hidden></p>
-        <!-- Campo oculto para armazenar o ID do local sendo editado -->
         <input type="hidden" id="edit-id">
 
         <div class="form-group">
@@ -305,26 +315,28 @@
         <p class="field-hint">X e Z: ±30.000.000 · Y: -64 a 320</p>
         <span class="error-msg" id="edit-error-coords">Preencha X e Z entre -30.000.000 e 30.000.000, e Y entre -64 e 320.</span>
 
-        <div class="form-group">
-          <label for="edit-dimensao">Dimensão</label>
-          <select id="edit-dimensao" required>
-            <option value="Overworld">🌲 Overworld</option>
-            <option value="Nether">🔥 Nether</option>
-            <option value="End">🌌 End</option>
-            <option value="The Sift">🌀 The Sift</option>
-          </select>
-        </div>
+        <div class="form-row-dual">
+          <div class="form-group">
+            <label for="edit-dimensao">Dimensão</label>
+            <select id="edit-dimensao" required>
+              <option value="Overworld">🌲 Overworld</option>
+              <option value="Nether">🔥 Nether</option>
+              <option value="End">🌌 End</option>
+              <option value="The Sift">🌀 The Sift</option>
+            </select>
+          </div>
 
-        <div class="form-group">
-          <label for="edit-categoria">Categoria</label>
-          <select id="edit-categoria" required>
-            <option value="Base">🏠 Base</option>
-            <option value="Farm">🌾 Farm</option>
-            <option value="Portal">🚪 Portal</option>
-            <option value="Vila">🏡 Vila</option>
-            <option value="Mina">⛏️ Mina</option>
-            <option value="Outros">📍 Outros</option>
-          </select>
+          <div class="form-group">
+            <label for="edit-categoria">Categoria</label>
+            <select id="edit-categoria" required>
+              <option value="Base">🏠 Base</option>
+              <option value="Farm">🌾 Farm</option>
+              <option value="Portal">🚪 Portal</option>
+              <option value="Vila">🏡 Vila</option>
+              <option value="Mina">⛏️ Mina</option>
+              <option value="Outros">📍 Outros</option>
+            </select>
+          </div>
         </div>
 
         <div class="form-row-dual">
@@ -371,6 +383,7 @@
     </div>
   </dialog>
 
+  <!-- Modal de Exclusão -->
   <dialog id="delete-modal" class="modal-overlay" aria-labelledby="delete-title" aria-describedby="delete-description">
     <div class="modal-card">
       <div class="card-header">
@@ -384,6 +397,7 @@
     </div>
   </dialog>
 
+  <!-- Modal F3+C -->
   <dialog id="f3c-modal" class="modal-overlay" aria-labelledby="f3c-title" aria-describedby="f3c-description">
     <div class="modal-card">
       <div class="card-header">
@@ -470,7 +484,7 @@
     <div class="modal-card">
       <div class="card-header">
         <h2 id="mods-title">📦 Exportar / Importar com Mods</h2>
-        <p id="mods-desc">Transfira seus pontos entre o minecoord e os mods mais populares de Minecraft.</p>
+        <p id="mods-desc">Transfira seus pontos entre o minecoord e os mods de minimapa mais populares.</p>
       </div>
       <div class="mods-options">
         <div class="mod-card">
@@ -490,8 +504,7 @@
     </div>
   </dialog>
 
-  <!-- JavaScript Externo -->
-  <script src="audio.js"></script>
+  <!-- JavaScript Modular Limpo (Zero Áudio) -->
   <script src="tools.js"></script>
   <script src="radar.js"></script>
   <script src="storage.js"></script>

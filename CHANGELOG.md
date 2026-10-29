@@ -9,10 +9,15 @@
 - **Bússola e Calculadora de Distância**: barra com a posição atual do jogador (com preenchimento via F3+C ou manual), calculando em tempo real a distância euclidiana em blocos e a direção cardeal (Norte, Sul, Leste, Oeste, Nordeste, Sudeste, Sudoeste, Noroeste), com ordenação por proximidade.
 - **Mini Radar 2D Interativo**: visualização top-down desenvolvida em HTML5 Canvas, suportando navegação por arrasto (pan), zoom pela roda do mouse ou botões, grade dinâmica de blocos e indicação pulsante da posição do jogador.
 - **Cores Personalizadas para Marcadores**: paleta temática de minérios de Minecraft (Diamante `#38bdf8`, Esmeralda `#10b981`, Redstone `#ef4444`, Ouro `#f59e0b`, Ametista `#a855f7`, The Sift `#f472b6` e Ardósia `#9ca3af`) exibidas na tabela e renderizadas no Radar.
-- **Efeitos Sonoros Retrô Sintetizados**: efeitos sonoros em tempo real sintetizados via Web Audio API (sem dependências de rede ou arquivos pesados de áudio) com **botão de alternância e persistência** no cabeçalho.
 - **Triangulador de Stronghold (Olhos do Fim)**: cálculo trigonométrico da coordenada da Fortaleza a partir de 2 lançamentos de Olhos do Fim com ângulos Yaw do Minecraft, com botão de inserção direta no atlas.
 - **Compatibilidade com Mods**: exportação e importação diretas de waypoints para **Xaero's Minimap** (`.txt`) e **JourneyMap** (`.json`).
 - **Compartilhamento Rápido**: botão para copiar coordenadas formatadas com emojis prontas para envio em chats e Discord.
+
+### Lapidação de Interface e Usabilidade
+
+- **Cabeçalho Limpo e Focado**: seletor de mundos reposicionado em pílula centralizada elegante (`.world-pill`) com criação rápida de mundos/saves.
+- **Barra de Ferramentas Integrada**: ferramentas de exploração (Triangulador de Stronghold e Mods de minimapa) integradas à barra de ações, mantendo a tela espaçosa e sem botões soltos.
+- **Remoção de Efeitos Sonoros**: interface 100% silenciosa, sem sons sintéticos e com zero sobrecarga.
 
 ### Qualidade e Confiabilidade
 

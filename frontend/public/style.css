@@ -954,42 +954,73 @@ body { align-items: flex-start; background-attachment: fixed; }
 }
 
 /* =========================================================================
-   NOVA FASE: MUNDOS, FAVORITOS, RADAR 2D, BÚSSOLA, ÁUDIO E MODS
+   ORGANIZAÇÃO E EXPANSÃO: MUNDOS, FAVORITOS, RADAR 2D, BÚSSOLA E MODS
    ========================================================================= */
-.logo-row {
+.world-bar {
   display: flex;
+  justify-content: center;
   align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 16px;
+  margin-top: 14px;
 }
-.header-tools {
-  display: flex;
+.world-pill {
+  display: inline-flex;
   align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-.world-selector-container {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.select-mundo {
+  gap: 8px;
   background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  padding: 6px 14px;
+  border-radius: 9999px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+.world-icon {
+  font-size: 1rem;
+}
+.world-label {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+.select-mundo-clean {
+  background: var(--bg-input);
   color: var(--color-diamond);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
-  padding: 6px 10px;
+  padding: 4px 10px;
   font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
+  outline: none;
+  transition: var(--transition-fast);
+}
+.select-mundo-clean:focus {
+  border-color: var(--color-diamond);
+}
+.btn-novo-mundo-clean {
+  background: rgba(56, 189, 248, 0.1);
+  color: var(--color-diamond);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+.btn-novo-mundo-clean:hover {
+  background: var(--color-diamond);
+  color: #0d0e12;
+}
+.btn-tool {
+  border-color: rgba(56, 189, 248, 0.25);
+  color: var(--color-diamond);
+}
+.btn-tool:hover {
+  background: rgba(56, 189, 248, 0.1);
+  border-color: var(--color-diamond);
 }
 .btn-sm {
   padding: 6px 10px;
   font-size: 0.78rem;
-}
-.btn-audio {
-  white-space: nowrap;
 }
 .form-row-dual {
   display: grid;
@@ -1043,8 +1074,8 @@ body { align-items: flex-start; background-attachment: fixed; }
   font-weight: 700;
 }
 .player-position-bar {
-  background: rgba(56, 189, 248, 0.05);
-  border: 1px solid rgba(56, 189, 248, 0.2);
+  background: rgba(56, 189, 248, 0.04);
+  border: 1px solid rgba(56, 189, 248, 0.15);
   border-radius: var(--radius-md);
   padding: 10px 14px;
   margin-bottom: 14px;

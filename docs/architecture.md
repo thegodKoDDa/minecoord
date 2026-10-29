@@ -42,13 +42,12 @@ O desktop mantém a tabela; celular usa o mesmo conteúdo em blocos. Há foco vi
 
 ## Atlas 1.5 (Expansão Temática Minecraft)
 
-A versão 1.5 introduz módulos frontend puros e modulares (`audio.js`, `tools.js` e `radar.js`), totalmente independentes de bundlers ou frameworks:
+A versão 1.5 introduz módulos frontend puros e modulares (`tools.js` e `radar.js`), totalmente independentes de bundlers ou frameworks:
 
 - **Contrato de Dados Estendido**:
   - `mundo`: texto de até 40 caracteres com o nome do save/mundo (padrão `'Principal'`).
   - `favorito`: booleano (padrão `false`), promovendo itens marcados ao topo da tabela e destaque visual com estrela ⭐.
   - `cor`: string hexadecimal de 6 dígitos no formato `^#[0-9a-fA-F]{6}$` com paleta temática de minérios do Minecraft.
-- **Módulo de Áudio (`audio.js`)**: sintetizador via Web Audio API nativa com osciladores e curvas de ganho em tempo real (`click`, `save`, `favorite`, `delete`, `teleport`, `chest`). O estado do áudio é salvo em `minecoord.audio.ativo` no `localStorage` e controlado por botão acessível com `aria-pressed`.
 - **Módulo de Ferramentas (`tools.js`)**:
   - Triangulação de Stronghold: interseção vetorial 2D no plano X/Z considerando as rotações de ângulo Yaw do Minecraft Java.
   - Bússola e Proximidade: distância euclidiana ($\sqrt{\Delta X^2 + \Delta Z^2}$) e rotação em 8 octantes cardeais (N, NE, L, SE, S, SO, O, NO).

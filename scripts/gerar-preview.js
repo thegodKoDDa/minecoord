@@ -90,7 +90,6 @@ async function gerarPreview() {
   await page.evaluate(dados => {
     localStorage.setItem('minecoord.locais.v1', JSON.stringify(dados));
     localStorage.setItem('minecoord.mundos.v1', JSON.stringify(['Principal', 'Hardcore 1.21', 'SMP dos Amigos']));
-    localStorage.setItem('minecoord.audio.ativo', 'true');
   }, pontosExemplo);
 
   // Recarrega a página para carregar o estado

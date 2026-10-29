@@ -140,12 +140,6 @@ async function main() {
       console.log('Acessibilidade automatizada: sem violações no diálogo em celular.');
     }
     await page.keyboard.press('Escape');
-    // Testa alternância de som
-    await page.locator('#btn-audio-toggle').click();
-    assert.equal(await page.locator('#btn-audio-toggle').getAttribute('aria-pressed'), 'false');
-    await page.locator('#btn-audio-toggle').click();
-    assert.equal(await page.locator('#btn-audio-toggle').getAttribute('aria-pressed'), 'true');
-
     // Testa cálculo de distância a partir da posição do jogador
     await page.locator('#player-x').fill('-80');
     await page.locator('#player-z').fill('60');

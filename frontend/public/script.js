@@ -51,30 +51,6 @@ document.addEventListener('DOMContentLoaded', () => {
     console.warn('Não foi possível inicializar o radar:', err);
   }
 
-  // Configuração do Áudio (Web Audio API)
-  function sincronizarBotaoAudio() {
-    const btn = $('btn-audio-toggle');
-    const icon = $('audio-status-icon');
-    const text = $('audio-status-text');
-    if (!btn || !window.MinecoordAudio) return;
-    const ativo = window.MinecoordAudio.isAtivo();
-    btn.setAttribute('aria-pressed', String(ativo));
-    if (icon) icon.textContent = ativo ? '🔊' : '🔇';
-    if (text) text.textContent = ativo ? 'Sons: Ativados' : 'Sons: Mudos';
-  }
-  sincronizarBotaoAudio();
-
-  $('btn-audio-toggle')?.addEventListener('click', () => {
-    if (!window.MinecoordAudio) return;
-    const ativo = window.MinecoordAudio.toggle();
-    sincronizarBotaoAudio();
-    avisar(ativo ? 'Efeitos sonoros ativados.' : 'Efeitos sonoros desativados.');
-  });
-
-  function tocarSom(tipo) {
-    if (window.MinecoordAudio) window.MinecoordAudio.play(tipo);
-  }
-
   function avisar(mensagem, erro = false) {
     if (erro && editModal?.open) {
       $('edit-feedback').textContent = mensagem;
@@ -123,11 +99,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const seletorMundo = $('seletor-mundo');
     if (seletorMundo) {
       const valorAtual = seletorMundo.value || mundoFiltro;
-      seletorMundo.innerHTML = '<option value="Todos">🌍 Todos os Mundos</option>';
+      seletorMundo.innerHTML = '<option value="Todos">🌍 Todos os mundos</option>';
       listaOrdenada.forEach(m => {
         const opt = document.createElement('option');
         opt.value = m;
-        opt.textContent = `📁 ${m}`;
+        opt.textContent = m;
         seletorMundo.appendChild(opt);
       });
       seletorMundo.value = conjuntoMundos.has(valorAtual) || valorAtual === 'Todos' ? valorAtual : 'Todos';
@@ -239,7 +215,6 @@ document.addEventListener('DOMContentLoaded', () => {
       $('player-z').value = parseado.z;
       atualizarPosicaoJogador();
       avisar(`Sua posição atual foi definida: X: ${parseado.x}, Z: ${parseado.z}. Distâncias calculadas!`);
-      tocarSom('click');
       return;
     }
 
@@ -249,7 +224,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (parseado.dimensao) $('dimensao').value = parseado.dimensao;
     const dimTexto = parseado.dimensao ? ` Dimensão: ${parseado.dimensao},` : '';
     avisar(`Coordenadas preenchidas do Minecraft!${dimTexto} X: ${parseado.x}, Y: ${parseado.y}, Z: ${parseado.z}.`);
-    tocarSom('click');
     $('coord-x').focus();
   }
 
@@ -261,7 +235,6 @@ document.addEventListener('DOMContentLoaded', () => {
       botao.classList.add('copied');
       const textSpan = botao.querySelector('.copy-portal-text');
       if (textSpan) textSpan.textContent = 'Copiado!';
-      tocarSom('teleport');
       avisar(`Comando de teletransporte para o portal no ${dimNome} copiado (${comando}).`);
       setTimeout(() => {
         botao.classList.remove('copied');
@@ -310,7 +283,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const ordem = $('ordenacao').value;
     filtrados.sort((a, b) => {
-      // Prioridade: Favoritos sempre no topo, a menos que selecionada ordenação específica
       const favA = a.favorito ? 1 : 0;
       const favB = b.favorito ? 1 : 0;
       if (favA !== favB) return favB - favA;
@@ -356,7 +328,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     renderizarTabela(paginados);
 
-    // Sincroniza pontos com o radar 2D
     if (radarInstancia) {
       radarInstancia.atualizar(filtrados, dimensaoFiltro);
     }
@@ -456,7 +427,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const starBtn = tr.querySelector('.btn-star');
       starBtn.addEventListener('click', async () => {
         if (salvando) return;
-        tocarSom('favorite');
         const novoStatus = !local.favorito;
         local.favorito = novoStatus;
         starBtn.classList.toggle('favorito', novoStatus);
@@ -485,7 +455,6 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
           if (navigator.clipboard?.writeText) {
             await navigator.clipboard.writeText(texto);
-            tocarSom('teleport');
             avisar(`Coordenadas de “${local.nome}” copiadas para compartilhar!`);
           } else {
             prompt('Copie as coordenadas formatadas:', texto);
@@ -621,7 +590,6 @@ document.addEventListener('DOMContentLoaded', () => {
         else locaisCache.push(salvo);
         formulario.reset();
         if (prefixo) editModal.close();
-        tocarSom('save');
         avisar(`“${salvo.nome}” ${id ? 'atualizado' : 'cadastrado'} com sucesso.`);
       } catch (error) {
         avisar(error.message, true);
@@ -761,7 +729,6 @@ document.addEventListener('DOMContentLoaded', () => {
       locaisCache = locaisCache.filter(item => item.id !== local.id);
       deleteModal.close();
       excluirPendente = null;
-      tocarSom('delete');
       avisar(`“${local.nome}” excluído com sucesso.`);
     } catch (error) {
       deleteModal.close();
@@ -780,7 +747,6 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       if (!navigator.clipboard?.writeText) throw new Error('Clipboard indisponível');
       await navigator.clipboard.writeText(comando);
-      tocarSom('teleport');
       botao.classList.add('copied');
       botao.querySelector('.copy-text').textContent = 'Copiado!';
       botao.setAttribute('aria-label', `Copiado! Comando para ${local.nome}`);
@@ -803,7 +769,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     dimensaoFiltro = button.dataset.filter;
     paginaAtual = 1;
-    tocarSom('click');
     if (carregou) filtrarERenderizarLocais();
   }));
 
@@ -811,7 +776,6 @@ document.addEventListener('DOMContentLoaded', () => {
   $('seletor-mundo')?.addEventListener('change', e => {
     mundoFiltro = e.target.value;
     paginaAtual = 1;
-    tocarSom('click');
     if ($('mundo') && mundoFiltro !== 'Todos') {
       $('mundo').value = mundoFiltro;
     }
@@ -842,7 +806,6 @@ document.addEventListener('DOMContentLoaded', () => {
     $('seletor-mundo').value = nome;
     if ($('mundo')) $('mundo').value = nome;
     novoMundoModal.close();
-    tocarSom('save');
     avisar(`Mundo “${nome}” criado e selecionado.`);
     if (carregou) filtrarERenderizarLocais();
   });
@@ -868,7 +831,6 @@ document.addEventListener('DOMContentLoaded', () => {
       $('st-resultado-coords').textContent = `X: ${res.x}, Z: ${res.z} (Y estimado: ~32)`;
       $('stronghold-resultado').hidden = false;
       $('stronghold-feedback').hidden = true;
-      tocarSom('save');
     } catch (err) {
       $('stronghold-feedback').textContent = err.message;
       $('stronghold-feedback').hidden = false;
@@ -887,7 +849,6 @@ document.addEventListener('DOMContentLoaded', () => {
     $('cor').value = '#a855f7';
     $('favorito').checked = true;
     strongholdModal.close();
-    tocarSom('teleport');
     avisar('Coordenadas da Fortaleza inseridas no formulário! Clique em "Salvar Localização" para confirmar.');
     $('btn-submit').focus();
   });
@@ -901,7 +862,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelector('.table-container').hidden = false;
     if ($('pagination-container') && locaisCache.length > 25) $('pagination-container').hidden = false;
     $('radar-container').hidden = true;
-    tocarSom('click');
   });
 
   $('btn-view-radar')?.addEventListener('click', () => {
@@ -912,7 +872,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelector('.table-container').hidden = true;
     if ($('pagination-container')) $('pagination-container').hidden = true;
     $('radar-container').hidden = false;
-    tocarSom('click');
     if (radarInstancia) {
       radarInstancia.redimensionar();
       radarInstancia.centralizar();
@@ -940,7 +899,6 @@ document.addEventListener('DOMContentLoaded', () => {
     a.download = `waypoints-xaero-${new Date().toISOString().slice(0, 10)}.txt`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
-    tocarSom('chest');
     avisar('Waypoints exportados no formato do Xaero’s Minimap!');
   });
 
@@ -954,7 +912,6 @@ document.addEventListener('DOMContentLoaded', () => {
     a.download = `waypoints-journeymap-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
-    tocarSom('chest');
     avisar('Waypoints exportados no formato do JourneyMap!');
   });
 
@@ -966,21 +923,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
   atualizar.addEventListener('click', () => {
     feedback.hidden = true;
-    tocarSom('click');
     carregarLocais();
   });
 
   $('btn-page-prev').addEventListener('click', () => {
     if (paginaAtual > 1) {
       paginaAtual--;
-      tocarSom('click');
       filtrarERenderizarLocais();
     }
   });
 
   $('btn-page-next').addEventListener('click', () => {
     paginaAtual++;
-    tocarSom('click');
     filtrarERenderizarLocais();
   });
 
@@ -1011,7 +965,6 @@ document.addEventListener('DOMContentLoaded', () => {
       anchor.download = `minecoord-${new Date().toISOString().slice(0, 10)}.json`;
       anchor.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
-      tocarSom('chest');
       avisar('Backup preparado. Confira o arquivo na pasta de downloads.');
     } catch (error) {
       avisar(error.message, true);
@@ -1035,7 +988,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (modWaypoints && modWaypoints.length > 0) {
           const rowsValidadas = window.MinecoordStorage.validar(modWaypoints);
           const result = await enviar('/api/locais/importar', 'POST', rowsValidadas);
-          tocarSom('chest');
           avisar(`${result.importados} waypoints de mod importados com sucesso!`);
           return;
         }
@@ -1045,7 +997,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const content = JSON.parse(text);
       const rows = window.MinecoordStorage.validar(Array.isArray(content) ? content : content.locais);
       const result = await enviar('/api/locais/importar', 'POST', rows);
-      tocarSom('chest');
       avisar(`${result.importados} pontos importados. Os pontos existentes foram preservados.`);
     } catch (error) {
       avisar(error instanceof SyntaxError ? 'Arquivo JSON inválido. Nenhum ponto foi importado.' : error.message, true);
