@@ -5,7 +5,7 @@ Seu mundo, bem localizado. Um atlas de coordenadas para organizar bases, portais
 [![Verificações](https://github.com/thegodKoDDa/minecoord/actions/workflows/ci.yml/badge.svg)](https://github.com/thegodKoDDa/minecoord/actions/workflows/ci.yml)
 [![Licença ISC](https://img.shields.io/badge/licen%C3%A7a-ISC-blue.svg)](LICENSE)
 
-![Interface do minecoord com pontos de exemplo](docs/assets/preview.png)
+![Interface do minecoord com pontos de exemplo](docs/assets/preview.png?v=1.4.0)
 
 ## Recursos
 
