@@ -408,7 +408,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <td data-label="Coordenadas">
           <div class="coordinate-details">
             <div class="coord-badge-container">
-              ${['x', 'y', 'z'].map(axis => `<span class="coord-axis">${axis.toUpperCase()}: <span class="coord-axis-val">${escaparHTML(local[axis])}</span></span>`).join('')}
+              ${['x', 'y', 'z'].map(axis => `<span class="coord-axis"><span class="axis-badge axis-${axis}">${axis.toUpperCase()}</span><span class="coord-axis-val">${escaparHTML(local[axis])}</span></span>`).join('')}
               ${distanciaHTML}
             </div>
             ${portal}

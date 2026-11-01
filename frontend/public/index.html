@@ -11,16 +11,20 @@
 <body>
   <div class="app-container">
     <header class="app-header">
-      <div class="logo-container">
-        <span class="cube-icon" aria-hidden="true">🟩</span>
-        <h1>mine<span class="accent-text">coord</span></h1>
+      <div class="header-brand">
+        <div class="logo-container">
+          <span class="cube-icon" aria-hidden="true">🟩</span>
+          <h1>mine<span class="accent-text">coord</span></h1>
+        </div>
+        <p class="subtitle">Seu mundo, bem localizado. Bases, descobertas e caminhos para a próxima aventura.</p>
       </div>
-      <p class="subtitle">Seu mundo, bem localizado. Bases, descobertas e caminhos para a próxima aventura.</p>
 
-      <div class="world-bar">
-        <div class="world-pill">
-          <span class="world-icon" aria-hidden="true">📁</span>
-          <span class="world-label">Mundo / Save:</span>
+      <div class="header-world-widget" role="group" aria-label="Seleção de mundo ou save ativo">
+        <div class="world-widget-label">
+          <span class="world-widget-icon" aria-hidden="true">📁</span>
+          <span>Mundo / Save:</span>
+        </div>
+        <div class="world-widget-controls">
           <label for="seletor-mundo" class="sr-only">Selecionar mundo ativo</label>
           <select id="seletor-mundo" class="select-mundo-clean" title="Filtrar pontos por mundo">
             <option value="Todos">🌍 Todos os mundos</option>
@@ -80,16 +84,16 @@
           </div>
 
           <div class="coordinates-grid">
-            <div class="form-group">
-              <label for="coord-x">X</label>
+            <div class="form-group coord-group">
+              <label for="coord-x" class="coord-label"><span class="axis-badge axis-x">X</span></label>
               <input type="number" id="coord-x" min="-30000000" max="30000000" step="any" aria-describedby="error-coords" name="x" placeholder="X" required>
             </div>
-            <div class="form-group">
-              <label for="coord-y">Y (altura)</label>
+            <div class="form-group coord-group">
+              <label for="coord-y" class="coord-label"><span class="axis-badge axis-y">Y</span><span class="coord-hint-tag">altura</span></label>
               <input type="number" id="coord-y" min="-64" max="320" step="any" aria-describedby="error-coords" name="y" placeholder="Y" required>
             </div>
-            <div class="form-group">
-              <label for="coord-z">Z</label>
+            <div class="form-group coord-group">
+              <label for="coord-z" class="coord-label"><span class="axis-badge axis-z">Z</span></label>
               <input type="number" id="coord-z" min="-30000000" max="30000000" step="any" aria-describedby="error-coords" name="z" placeholder="Z" required>
             </div>
           </div>
@@ -100,7 +104,7 @@
             <div class="form-group">
               <label for="dimensao">Dimensão</label>
               <select id="dimensao" name="dimensao" aria-describedby="error-dimensao" required>
-                <option value="" disabled selected>Selecione a Dimensão</option>
+                <option value="" disabled selected>Dimensão...</option>
                 <option value="Overworld">🌲 Overworld</option>
                 <option value="Nether">🔥 Nether</option>
                 <option value="End">🌌 End</option>
@@ -112,7 +116,7 @@
             <div class="form-group">
               <label for="categoria">Categoria</label>
               <select id="categoria" name="categoria" aria-describedby="error-categoria" required>
-                <option value="" disabled selected>Selecione a Categoria</option>
+                <option value="" disabled selected>Categoria...</option>
                 <option value="Base">🏠 Base</option>
                 <option value="Farm">🌾 Farm</option>
                 <option value="Portal">🚪 Portal</option>
@@ -134,13 +138,13 @@
             <div class="form-group">
               <label for="cor">Cor do Marcador</label>
               <select id="cor" name="cor">
-                <option value="#38bdf8">💎 Diamante (Azul)</option>
-                <option value="#10b981">🌲 Esmeralda (Verde)</option>
-                <option value="#ef4444">🔥 Redstone (Vermelho)</option>
-                <option value="#f59e0b">⭐ Ouro (Dourado)</option>
-                <option value="#a855f7">🌌 Ametista (Roxo)</option>
-                <option value="#f472b6">🌀 The Sift (Rosa)</option>
-                <option value="#9ca3af">⛏️ Ardósia (Cinza)</option>
+                <option value="#38bdf8">💎 Diamante</option>
+                <option value="#10b981">🌲 Esmeralda</option>
+                <option value="#ef4444">🔥 Redstone</option>
+                <option value="#f59e0b">⭐ Ouro</option>
+                <option value="#a855f7">🌌 Ametista</option>
+                <option value="#f472b6">🌀 The Sift</option>
+                <option value="#9ca3af">⛏️ Ardósia</option>
               </select>
             </div>
           </div>
@@ -195,8 +199,14 @@
         <div class="player-position-bar" id="player-position-bar">
           <div class="player-pos-row">
             <span class="compass-badge">🧭 Minha Posição:</span>
-            <input type="number" id="player-x" placeholder="X" step="any" aria-label="Minha coordenada X" title="Sua coordenada X atual">
-            <input type="number" id="player-z" placeholder="Z" step="any" aria-label="Minha coordenada Z" title="Sua coordenada Z atual">
+            <div class="player-coord-input-wrap">
+              <span class="axis-badge axis-x">X</span>
+              <input type="number" id="player-x" placeholder="X" step="any" aria-label="Minha coordenada X" title="Sua coordenada X atual">
+            </div>
+            <div class="player-coord-input-wrap">
+              <span class="axis-badge axis-z">Z</span>
+              <input type="number" id="player-z" placeholder="Z" step="any" aria-label="Minha coordenada Z" title="Sua coordenada Z atual">
+            </div>
             <button type="button" class="btn-secondary btn-sm" id="btn-player-f3c" title="Preencher minha posição colando do F3+C">Colar F3+C</button>
             <button type="button" class="btn-secondary btn-sm" id="btn-player-limpar" title="Limpar posição atual">✕</button>
           </div>
@@ -299,16 +309,16 @@
         </div>
 
         <div class="coordinates-grid">
-          <div class="form-group">
-            <label for="edit-coord-x">X</label>
+          <div class="form-group coord-group">
+            <label for="edit-coord-x" class="coord-label"><span class="axis-badge axis-x">X</span></label>
             <input type="number" id="edit-coord-x" min="-30000000" max="30000000" step="any" aria-describedby="edit-error-coords" placeholder="X" required>
           </div>
-          <div class="form-group">
-            <label for="edit-coord-y">Y (altura)</label>
+          <div class="form-group coord-group">
+            <label for="edit-coord-y" class="coord-label"><span class="axis-badge axis-y">Y</span><span class="coord-hint-tag">altura</span></label>
             <input type="number" id="edit-coord-y" min="-64" max="320" step="any" aria-describedby="edit-error-coords" placeholder="Y" required>
           </div>
-          <div class="form-group">
-            <label for="edit-coord-z">Z</label>
+          <div class="form-group coord-group">
+            <label for="edit-coord-z" class="coord-label"><span class="axis-badge axis-z">Z</span></label>
             <input type="number" id="edit-coord-z" min="-30000000" max="30000000" step="any" aria-describedby="edit-error-coords" placeholder="Z" required>
           </div>
         </div>
@@ -349,13 +359,13 @@
           <div class="form-group">
             <label for="edit-cor">Cor do Marcador</label>
             <select id="edit-cor">
-              <option value="#38bdf8">💎 Diamante (Azul)</option>
-              <option value="#10b981">🌲 Esmeralda (Verde)</option>
-              <option value="#ef4444">🔥 Redstone (Vermelho)</option>
-              <option value="#f59e0b">⭐ Ouro (Dourado)</option>
-              <option value="#a855f7">🌌 Ametista (Roxo)</option>
-              <option value="#f472b6">🌀 The Sift (Rosa)</option>
-              <option value="#9ca3af">⛏️ Ardósia (Cinza)</option>
+              <option value="#38bdf8">💎 Diamante</option>
+              <option value="#10b981">🌲 Esmeralda</option>
+              <option value="#ef4444">🔥 Redstone</option>
+              <option value="#f59e0b">⭐ Ouro</option>
+              <option value="#a855f7">🌌 Ametista</option>
+              <option value="#f472b6">🌀 The Sift</option>
+              <option value="#9ca3af">⛏️ Ardósia</option>
             </select>
           </div>
         </div>

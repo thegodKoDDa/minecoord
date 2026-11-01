@@ -1,5 +1,18 @@
 # Histórico de versões
 
+## 1.5.1 — 2026-10-31
+
+### Padronização Visual e Lapidação Completa da Interface
+
+- **Top Navbar Integrada**: reorganização completa do cabeçalho com alinhamento balanceado de marca à esquerda e o widget de controle de mundo ativo à direita (`.header-world-widget`), eliminando elementos flutuando no meio da tela.
+- **Redesign de Coordenadas com Badges RGB**: caixa unificada de coordenadas X, Y, Z com badges de cores oficiais do Minecraft Java F3 (<span style="color:#ef4444;">[X] Vermelho</span>, <span style="color:#10b981;">[Y] Verde</span> e <span style="color:#38bdf8;">[Z] Ciano</span>), remoção de setas nativas e alinhamento de precisão em fonte monospace.
+- **Formulário de Cadastro e Edição Espaçosos**: barra lateral expandida para até 420px, garantindo que opções de seleção de dimensão, categoria, mundo e cor dos marcadores fiquem 100% visíveis, sem cortes de texto ou desalinhamentos.
+- **Padronização do Inventário de Pontos**: tabela com badges RGB em todas as coordenadas, indicador estilizado de portais equivalentes (1:8), anotações em bloco com destaque diamante e botões de ação uniformes.
+- **Minha Posição e Bússola Integradas**: campos X e Z da barra de posição atual padronizados com badges RGB e tipografia monospace.
+- **Barra de Pesquisa com Ícone SVG**: campo de busca com lupa integrada que ganha brilho diamante ao receber foco.
+- **Controles de Visualização Segmentados**: alternador de tabela e radar 2D refinado com cantos arredondados e transições suaves.
+- **100% Aprovado em Acessibilidade**: zero violações de acessibilidade WCAG 2.1 AA / Axe-core no desktop e em celular.
+
 ## 1.5.0 — 2026-10-29
 
 ### Expansão Temática Minecraft
